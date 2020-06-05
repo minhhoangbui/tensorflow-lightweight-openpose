@@ -1,0 +1,7 @@
+annotation_dir: '/home/hoangbm/datasets/coco2017'
+image_dir: '/mnt/ssd2/Datasets/COCO2017/images'
+stride: 8
+sigma: 7
+paf_thickness: 1
+batch_size: 64
+input_size: 368

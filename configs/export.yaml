@@ -1,0 +1,9 @@
+MODEL:
+  num_channels: 128
+  num_stages: 1
+  input_size: 368
+EXPORT:
+  format: 'tf'
+  saved_model: "/home/hoangbm/pose_saved_model"
+  tf_lite: "/home/hoangbm/pose.tflite"
+  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/lw_pose_tf/ckpts/"
