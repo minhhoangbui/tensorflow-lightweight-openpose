@@ -1,0 +1,6 @@
+tensorflow==2.2.0
+PyYAML
+pycocotools
+opencv-python
+numpy
+MNN

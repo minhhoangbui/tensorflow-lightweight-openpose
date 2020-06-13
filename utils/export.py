@@ -76,5 +76,4 @@ if __name__ == '__main__':
         cfg = yaml.full_load(fp)
     # export_saved_model(cfg)
     # export_tflite(cfg)
-    # export_frozen_graph(cfg)
-    test_output(cfg)
+    export_frozen_graph(cfg)
