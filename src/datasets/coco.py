@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import copy
+import json
 
 from pathlib import Path
 import sys
@@ -155,7 +156,7 @@ class CocoDataset:
         return dataset
 
 
-class CocoValDataset:
+class CocoValDataset_:
     def __init__(self, annotations_dir, images_dir, dataset_type):
         if dataset_type == 'train':
             self._annotations_dir = os.path.join(annotations_dir, 'train2017.pkl')
@@ -179,5 +180,22 @@ class CocoValDataset:
         dataset = dataset.shuffle(buffer_size=1000).repeat(1)
         dataset = dataset.batch(1)
         return dataset
+
+
+class CocoValDataset:
+    def __init__(self, annotations_dir, images_dir, dataset_type):
+        if dataset_type == 'train':
+            self.images_dir = os.path.join(images_dir, 'train2017')
+            self.annotation_file = os.path.join(annotations_dir, 'person_keypoints_train2017.json')
+        elif dataset_type == 'val':
+            self.images_dir = os.path.join(images_dir, 'val2017')
+            self.annotation_file = os.path.join(annotations_dir, 'person_keypoints_val2017.json')
+        else:
+            raise ValueError("Don't support other types")
+
+        with open(self.annotation_file, 'r') as fp:
+            annotations = json.load(fp)
+        sample_size = len(annotations['images'])
+        self.sample = [annotations['images'][idx]['file_name'] for idx in range(sample_size)]
 
 

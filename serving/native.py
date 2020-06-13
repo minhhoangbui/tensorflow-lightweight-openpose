@@ -22,12 +22,13 @@ class Serving(BaseServing):
 
         scaled_image = (scaled_image - 128) / 255.0
         scaled_image = np.expand_dims(scaled_image, axis=0)
+
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
 
         stages_output = self.model(tensor_input)
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
-        print(np.sum(heatmaps[:, :, :-1]))
+
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)
@@ -42,11 +43,11 @@ class Serving(BaseServing):
 
 if __name__ == '__main__':
     config = sys.argv[1]
-    os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+    with open(config, 'r') as fp:
+        cfg = yaml.full_load(fp)
+    os.environ['CUDA_VISIBLE_DEVICES'] = cfg['COMMON']['GPU']
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
-    with open(config, 'r') as fp:
-        cfg = yaml.full_load(fp)
     tester = Serving(cfg)
     tester.predict(cfg['DATASET']['image'])

@@ -1,6 +1,7 @@
 import cv2
 import json
 import os
+from abc import abstractmethod
 import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
@@ -51,39 +52,29 @@ def run_coco_eval(gt_file_path, dt_file_path):
     result.summarize()
 
 
-class Evaluator:
+class BaseEvaluator:
     def __init__(self, cfg):
         self.cfg = cfg
         self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'], 'lw_pose_tf')
-        self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
-
         self.dataset = CocoValDataset(cfg['DATASET']['annotations'],
                                       cfg['DATASET']['images_dir'],
                                       cfg['DATASET']['dataset_type'])
-        if cfg["DATASET"]['dataset_type'] == 'train':
-            self.json = os.path.join(cfg['DATASET']['json_dir'], 'person_keypoints_train2017.json')
-        elif cfg["DATASET"]['dataset_type'] == "val":
-            self.json = os.path.join(cfg['DATASET']['json_dir'], 'person_keypoints_val2017.json')
-        else:
-            raise ValueError("Don't support other types")
-        self.images_dir, self.annotations = self.dataset.get_images_and_annotations()
+        self.images_dir = self.dataset.images_dir
+
         self.input_size = cfg['MODEL']['input_size']
         self.stride = cfg['MODEL']['stride']
         self.output = cfg['COMMON']['output']
 
     def evaluate(self):
         coco_result = []
-        for sample in self.dataset.get_index():
-            idx = sample.numpy()
-            annotation = self.annotations[idx[0]]
-            image_path = os.path.join(self.images_dir, annotation['img_paths'])
+        for file_name in self.dataset.sample:
 
+            image_path = os.path.join(self.images_dir, file_name)
             image = cv2.imread(image_path, cv2.IMREAD_COLOR)
             heatmaps, pafs, scale = self.infer(image)
 
             total_keypoints_num = 0
             all_keypoints_by_type = []
-
             for kp_idx in range(18):
                 total_keypoints_num = extract_keypoints(heatmaps[:, :, kp_idx], all_keypoints_by_type,
                                                         total_keypoints_num)
@@ -92,7 +83,7 @@ class Evaluator:
                 all_keypoints[kpt_id, 0] = all_keypoints[kpt_id, 0] / scale[0]
                 all_keypoints[kpt_id, 1] = all_keypoints[kpt_id, 1] / scale[1]
             coco_keypoints, scores = convert_to_coco_format(pose_entries, all_keypoints)
-            file_name = annotation['img_paths']
+
             image_id = int(file_name[0:file_name.rfind('.')])
             for _id in range(len(coco_keypoints)):
                 coco_result.append({
@@ -105,7 +96,17 @@ class Evaluator:
         with open(self.output, 'w') as f:
             json.dump(coco_result, f, indent=4)
 
-        run_coco_eval(self.json, self.output)
+        run_coco_eval(self.dataset.annotation_file, self.output)
+
+    @abstractmethod
+    def infer(self, image):
+        pass
+
+
+class TFEvaluator(BaseEvaluator):
+    def __init__(self, cfg):
+        super(TFEvaluator, self).__init__(cfg)
+        self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
 
     def infer(self, image):
         height, width, _ = image.shape
@@ -126,6 +127,41 @@ class Evaluator:
                           interpolation=cv2.INTER_CUBIC)
 
         return heatmaps, pafs, scale
+
+
+class TFLiteEvaluator(BaseEvaluator):
+    def __init__(self, cfg):
+        super(TFLiteEvaluator, self).__init__(cfg)
+        self.interpreter = tf.lite.Interpreter(cfg['MODEL']['tflite'])
+        self.interpreter.allocate_tensors()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
+
+    def infer(self, image):
+        height, width, _ = image.shape
+        scale = (self.input_size / width, self.input_size / height)
+        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
+                                  interpolation=cv2.INTER_CUBIC)
+        scaled_image = (scaled_image - 128) / 255.0
+        scaled_image = np.float32(scaled_image)
+
+        scaled_image = np.expand_dims(scaled_image, axis=0)
+        self.interpreter.set_tensor(self.input_details[0]['index'], scaled_image)
+        self.interpreter.invoke()
+        heatmaps = np.squeeze(self.interpreter.get_tensor(self.output_details[-2]['index']))
+        heatmaps = cv2.resize(heatmaps, (0, 0),
+                              fx=self.stride, fy=self.stride,
+                              interpolation=cv2.INTER_CUBIC)
+
+        pafs = np.squeeze(self.interpreter.get_tensor(self.output_details[-1]['index']))
+        pafs = cv2.resize(pafs, (0, 0),
+                          fx=self.stride, fy=self.stride,
+                          interpolation=cv2.INTER_CUBIC)
+        return heatmaps, pafs, scale
+
+
+
+
 
 
 

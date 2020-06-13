@@ -1,0 +1,17 @@
+COMMON:
+  GPU: '1'
+  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
+  output: "/tmp/output.json"
+  result: '/home/hoang/lightweight_openpose_tensorflow/serving/test.jpg'
+MODEL:
+  saved_model_dir: "/home/hoang/pose_saved_model"
+  tflite: "/home/hoang/pose.tflite"
+  mnn: "/home/hoang/pose.mnn"
+  frozen_graph: "/home/hoang/pose.pb"
+  input_size: 368
+  stride: 8
+DATASET:
+  annotations: "/mnt/ssd2/Datasets/COCO2017/annotations"
+  images_dir: '/mnt/ssd2/Datasets/COCO2017/images'
+  image: '/home/hoang/lightweight_openpose_tensorflow/serving/multi.jpg'
+  dataset_type: "train"

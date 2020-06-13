@@ -3,7 +3,8 @@ MODEL:
   num_stages: 1
   input_size: 368
 EXPORT:
-  format: 'tf'
-  saved_model: "/home/hoangbm/pose_saved_model"
-  tf_lite: "/home/hoangbm/pose.tflite"
+  format: 'sm'
+  saved_model: "/home/hoang/pose_saved_model"
+  tf_lite: "/home/hoang/pose.tflite"
   checkpoint: "/home/hoangbm/checkpoint/pose-estimation/lw_pose_tf/ckpts/"
+  frozen_pb: "/home/hoangbm/"

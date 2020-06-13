@@ -2,7 +2,6 @@ import os
 import tensorflow as tf
 import numpy as np
 import datetime
-import tensorflow_model_optimization as tfmot
 from src.utils.loss import get_loss
 from src.models.lightweight_openpose import LightWeightOpenPose
 
@@ -25,16 +24,7 @@ class Trainer(object):
                                              num_refinement_stages=cfg['MODEL']['num_stages'])
             self.model.build((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3))
             self.model.summary()
-            if cfg['COMMON']['pruning']:
-                pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(
-                    initial_sparsity=0.0, final_sparsity=0.5,
-                    begin_step=0, end_step=5000)
-                self.model = tfmot.sparsity.keras.prune_low_magnitude(
-                    self.model, pruning_schedule=pruning_schedule
-                )
 
-            if cfg['COMMON']['quantization']:
-                self.model = tfmot.quantization.keras.quantize_model(self.model)
             # initialize model
             self.model(np.zeros((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
                                 dtype=np.float32))

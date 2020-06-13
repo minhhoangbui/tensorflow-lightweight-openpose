@@ -19,13 +19,14 @@ class TFLiteServing(BaseServing):
         scale = (self.input_size / width, self.input_size / height)
         scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
                                   interpolation=cv2.INTER_CUBIC)
-        scaled_image = np.float32(scaled_image)
         scaled_image = (scaled_image - 128) / 255.0
+        scaled_image = np.float32(scaled_image)
         scaled_image = np.expand_dims(scaled_image, axis=0)
+
         self.interpreter.set_tensor(self.input_details[0]['index'], scaled_image)
         self.interpreter.invoke()
         heatmaps = np.squeeze(self.interpreter.get_tensor(self.output_details[-2]['index']))
-        print(np.sum(heatmaps[:, :, :-1]))
+
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)
