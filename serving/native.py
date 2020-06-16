@@ -5,12 +5,12 @@ import sys
 import yaml
 import os
 from serving.base import BaseServing
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 class Serving(BaseServing):
     def __init__(self, cfg):
         super(Serving, self).__init__(cfg)
-        # self.model = tf.saved_model.load(cfg['MODEL']['directory']).signatures["serving_default"]
         self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
 
     def infer(self, image):
@@ -28,12 +28,15 @@ class Serving(BaseServing):
         stages_output = self.model(tensor_input)
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
+        pafs = np.squeeze(stages_output[-1][1].numpy())
+        # print(np.sum(heatmaps))
+        # print(pafs.sum())
+        for i in range(19):
+            print(np.sum(heatmaps[:, :, i]))
 
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)
-
-        pafs = np.squeeze(stages_output[-1][1].numpy())
         pafs = cv2.resize(pafs, (0, 0),
                           fx=self.stride, fy=self.stride,
                           interpolation=cv2.INTER_CUBIC)

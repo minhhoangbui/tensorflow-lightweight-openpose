@@ -45,3 +45,6 @@ class BaseServing:
         for pose in current_poses:
             pose.draw(image)
         cv2.imwrite(self.cfg['COMMON']['result'], image)
+        # cv2.imshow('Result', image)
+        # if cv2.waitKey(0) == ord('q'):
+        #     cv2.destroyAllWindows()

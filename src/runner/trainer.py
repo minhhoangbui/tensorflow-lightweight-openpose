@@ -120,6 +120,11 @@ class Trainer(object):
             val_loss /= step + 1
             print("Evaluating - Epoch {}: loss {:1.2f}\n".format(epoch, val_loss))
 
+            with self.writer.as_default():
+                tf.summary.scalar('Training loss', train_loss, step=epoch)
+                tf.summary.scalar('Val loss', val_loss, step=epoch)
+                self.writer.flush()
+
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))

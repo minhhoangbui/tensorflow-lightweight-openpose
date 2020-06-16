@@ -13,6 +13,7 @@ You could find the original implementation in PyTorch [here](https://github.com/
 - [x] Various exporting options to SavedModel, FrozenGraph, TFLite, MNN
 - [x] Inference code for each exported format
 - [x] `tf.function` and `Concrete Function`
+- [x] TensorBoard integration
 
 ***Usage***
 

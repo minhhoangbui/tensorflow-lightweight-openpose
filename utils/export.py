@@ -43,9 +43,10 @@ def export_tflite(cfg):
     # Method 3: Using Saved Model
     # converter = tf.lite.TFLiteConverter.from_saved_model(cfg['EXPORT']['saved_model'])
 
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS,
-                            tf.lite.OpsSet.SELECT_TF_OPS]
+    if cfg['EXPORT']['quantized']:
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS,
+                                tf.lite.OpsSet.SELECT_TF_OPS]
 
     converter.experimental_new_converter = True
     tflite_model = converter.convert()
@@ -75,5 +76,5 @@ if __name__ == '__main__':
     with open(config, 'r') as fp:
         cfg = yaml.full_load(fp)
     # export_saved_model(cfg)
-    # export_tflite(cfg)
-    export_frozen_graph(cfg)
+    export_tflite(cfg)
+    # export_frozen_graph(cfg)

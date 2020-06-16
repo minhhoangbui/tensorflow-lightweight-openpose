@@ -12,7 +12,17 @@ class MNNServing(BaseServing):
         self.interpreter = MNN.Interpreter(cfg['MODEL']['mnn'])
         self.session = self.interpreter.createSession()
         self.input_tensor = self.interpreter.getSessionInput(self.session)
-        self.output_tensor = self.interpreter.getSessionOutputAll(self.session)
+        self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session,
+                                                                 'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd')
+        self.pafs_tensor = self.interpreter.getSessionOutput(self.session,
+                                                             'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
+
+        self.heatmaps_output = MNN.Tensor(self.heatmaps_tensor.getShape(), MNN.Halide_Type_Float,
+                                          np.ones(self.heatmaps_tensor.getShape(), dtype=np.float32),
+                                          MNN.Tensor_DimensionType_Tensorflow)
+        self.pafs_output = MNN.Tensor(self.pafs_tensor.getShape(), MNN.Halide_Type_Float,
+                                      np.ones(self.pafs_tensor.getShape(), dtype=np.float32),
+                                      MNN.Tensor_DimensionType_Tensorflow)
 
     def infer(self, image):
         height, width, _ = image.shape
@@ -26,24 +36,29 @@ class MNNServing(BaseServing):
         tmp_input = MNN.Tensor((1, self.input_size, self.input_size, 3),
                                MNN.Halide_Type_Float, scaled_image,
                                MNN.Tensor_DimensionType_Tensorflow)
+
         self.input_tensor.copyFrom(tmp_input)
         self.interpreter.runSession(self.session)
-        heatmaps = self.output_tensor[
-            'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd'].getData()
 
-        heatmaps = np.squeeze(heatmaps)
+        self.heatmaps_tensor.copyToHostTensor(self.heatmaps_output)
+        self.pafs_tensor.copyToHostTensor(self.pafs_output)
+
+        heatmaps = np.squeeze(self.heatmaps_output.getData())
+        pafs = np.squeeze(self.pafs_output.getData())
+        print(np.sum(heatmaps))
+        print(pafs.sum())
+
         heatmaps = heatmaps.transpose((1, 2, 0))
+        pafs = pafs.transpose((1, 2, 0))
+
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)
-        pafs = self.output_tensor[
-            'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd'].getData()
 
-        pafs = np.squeeze(pafs)
-        pafs = pafs.transpose((1, 2, 0))
         pafs = cv2.resize(pafs, (0, 0),
                           fx=self.stride, fy=self.stride,
                           interpolation=cv2.INTER_CUBIC)
+
         return heatmaps, pafs, scale
 
 

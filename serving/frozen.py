@@ -5,6 +5,7 @@ import sys
 import cv2
 import numpy as np
 from serving.base import BaseServing
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 class FrozenServing(BaseServing):
@@ -34,14 +35,17 @@ class FrozenServing(BaseServing):
         )
 
         heatmaps = np.squeeze(heatmaps)
+        pafs = np.squeeze(pafs)
+        print(np.sum(heatmaps))
+        print(pafs.sum())
+
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)
-
-        pafs = np.squeeze(pafs)
         pafs = cv2.resize(pafs, (0, 0),
                           fx=self.stride, fy=self.stride,
                           interpolation=cv2.INTER_CUBIC)
+
         return heatmaps, pafs, scale
 
 
