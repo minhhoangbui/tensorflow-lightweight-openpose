@@ -18,11 +18,11 @@ class MNNServing(BaseServing):
                                                              'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
 
         self.heatmaps_output = MNN.Tensor(self.heatmaps_tensor.getShape(), MNN.Halide_Type_Float,
-                                          np.ones(self.heatmaps_tensor.getShape(), dtype=np.float32),
-                                          MNN.Tensor_DimensionType_Tensorflow)
+                                          np.zeros(self.heatmaps_tensor.getShape(), dtype=np.float32),
+                                          MNN.Tensor_DimensionType_Caffe)
         self.pafs_output = MNN.Tensor(self.pafs_tensor.getShape(), MNN.Halide_Type_Float,
-                                      np.ones(self.pafs_tensor.getShape(), dtype=np.float32),
-                                      MNN.Tensor_DimensionType_Tensorflow)
+                                      np.zeros(self.pafs_tensor.getShape(), dtype=np.float32),
+                                      MNN.Tensor_DimensionType_Caffe)
 
     def infer(self, image):
         height, width, _ = image.shape
@@ -45,8 +45,9 @@ class MNNServing(BaseServing):
 
         heatmaps = np.squeeze(self.heatmaps_output.getData())
         pafs = np.squeeze(self.pafs_output.getData())
+
         print(np.sum(heatmaps))
-        print(pafs.sum())
+        print(np.sum(pafs))
 
         heatmaps = heatmaps.transpose((1, 2, 0))
         pafs = pafs.transpose((1, 2, 0))

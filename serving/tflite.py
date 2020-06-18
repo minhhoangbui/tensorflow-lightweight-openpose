@@ -30,8 +30,6 @@ class TFLiteServing(BaseServing):
 
         pafs = np.squeeze(self.interpreter.get_tensor(self.output_details[-1]['index']))
 
-        print(np.sum(heatmaps))
-        print(pafs.sum())
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
                               interpolation=cv2.INTER_CUBIC)

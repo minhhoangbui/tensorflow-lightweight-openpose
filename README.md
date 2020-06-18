@@ -16,8 +16,13 @@ You could find the original implementation in PyTorch [here](https://github.com/
 - [x] TensorBoard integration
 
 ***Usage***
-
+****Data Preparation****
+```bash
+python utils/prepare_annotations.py --labels .../person_keypoints_train2017.json 
+--output-name train.pkl
+```
 ****Training****
+
 ```bash
 python script/train.py configs/train.yaml
 ```
@@ -40,4 +45,4 @@ python serving/native configs/val.yaml
 ```
 
 ***Note:***
-If you have any question, feel free to open an issues or reach me out at this [email](minhhoangbui.vn@gmail.com)
+If you have any question, feel free to open an issue or reach me out at this [email](minhhoangbui.vn@gmail.com)
