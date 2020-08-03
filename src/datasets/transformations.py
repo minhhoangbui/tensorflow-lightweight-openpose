@@ -3,6 +3,53 @@ import random
 import numpy as np
 
 
+class ConvertKeypoints:
+    def __call__(self, sample):
+        label = sample['label']
+        h, w, _ = sample['image'].shape
+        keypoints = label['keypoints']
+        for keypoint in keypoints:  # keypoint[2] == 0: occluded, == 1: visible, == 2: not in image
+            if keypoint[0] == keypoint[1] == 0:
+                keypoint[2] = 2
+            if (keypoint[0] < 0
+                    or keypoint[0] >= w
+                    or keypoint[1] < 0
+                    or keypoint[1] >= h):
+                keypoint[2] = 2
+        for other_label in label['processed_other_annotations']:
+            keypoints = other_label['keypoints']
+            for keypoint in keypoints:
+                if keypoint[0] == keypoint[1] == 0:
+                    keypoint[2] = 2
+                if (keypoint[0] < 0
+                        or keypoint[0] >= w
+                        or keypoint[1] < 0
+                        or keypoint[1] >= h):
+                    keypoint[2] = 2
+        label['keypoints'] = self._convert(label['keypoints'], w, h)
+
+        for other_label in label['processed_other_annotations']:
+            other_label['keypoints'] = self._convert(other_label['keypoints'], w, h)
+        return sample
+
+    def _convert(self, keypoints, w, h):
+        # Nose, Neck, R hand, L hand, R leg, L leg, Eyes, Ears
+        reorder_map = [1, 7, 9, 11, 6, 8, 10, 13, 15, 17, 12, 14, 16, 3, 2, 5, 4]
+        converted_keypoints = list(keypoints[i - 1] for i in reorder_map)
+        converted_keypoints.insert(1, [(keypoints[5][0] + keypoints[6][0]) / 2,
+                                       (keypoints[5][1] + keypoints[6][1]) / 2, 0])  # Add neck as a mean of shoulders
+        if keypoints[5][2] == 2 or keypoints[6][2] == 2:
+            converted_keypoints[1][2] = 2
+        elif keypoints[5][2] == 1 and keypoints[6][2] == 1:
+            converted_keypoints[1][2] = 1
+        if (converted_keypoints[1][0] < 0
+                or converted_keypoints[1][0] >= w
+                or converted_keypoints[1][1] < 0
+                or converted_keypoints[1][1] >= h):
+            converted_keypoints[1][2] = 2
+        return converted_keypoints
+
+
 class Scale:
     def __init__(self, prob=1, min_scale=0.5, max_scale=1.1, target_dist=0.6):
         self._prob = prob
@@ -175,8 +222,9 @@ class CropPad:
 
 
 class Flip:
-    def __init__(self, prob=0.5):
+    def __init__(self, prob=0.5, dataset='coco'):
         self._prob = prob
+        self._dataset = dataset
 
     def __call__(self, sample):
         prob = random.random()
@@ -202,8 +250,14 @@ class Flip:
         return sample
 
     def _swap_left_right(self, keypoints):
-        right = [2, 3, 4, 8, 9, 10, 14, 16]
-        left = [5, 6, 7, 11, 12, 13, 15, 17]
+        if self._dataset == 'coco':
+            right = [2, 3, 4, 8, 9, 10, 14, 16]
+            left = [5, 6, 7, 11, 12, 13, 15, 17]
+        elif self._dataset == 'kinect':
+            right = [11, 12, 13, 14, 15, 16, 17, 22, 23, 24, 25, 30, 31]
+            left = [4, 5, 6, 7, 8, 9, 10, 18, 19, 20, 21, 28, 29]
+        else:
+            raise ModuleNotFoundError
         for r, l in zip(right, left):
             keypoints[r], keypoints[l] = keypoints[l], keypoints[r]
         return keypoints

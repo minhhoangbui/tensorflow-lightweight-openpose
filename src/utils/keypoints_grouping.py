@@ -4,11 +4,6 @@ import cv2
 from operator import itemgetter
 from src.utils.filters import OneEuroFilter
 
-BODY_PARTS_KPT_IDS = [[1, 2], [1, 5], [2, 3], [3, 4], [5, 6], [6, 7], [1, 8], [8, 9], [9, 10], [1, 11],
-                      [11, 12], [12, 13], [1, 0], [0, 14], [14, 16], [0, 15], [15, 17], [2, 16], [5, 17]]
-BODY_PARTS_PAF_IDS = ([12, 13], [20, 21], [14, 15], [16, 17], [22, 23], [24, 25], [0, 1], [2, 3], [4, 5],
-                      [6, 7], [8, 9], [10, 11], [28, 29], [30, 31], [34, 35], [32, 33], [36, 37], [18, 19], [26, 27])
-
 
 def linspace2d(start, stop, n=10):
     points = 1 / (n - 1) * (stop - start)
@@ -50,9 +45,18 @@ def extract_keypoints(heatmap, all_keypoints, total_keypoint_num):
     return keypoint_num + total_keypoint_num
 
 
-def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_score=0.05, demo=False):
+def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_score=0.05, demo=False, dataset='coco'):
+    if dataset == 'coco':
+        from src.datasets.coco import BODY_PARTS_KPT_IDS, BODY_PARTS_PAF_IDS
+        ignored = [17, 18]
+    elif dataset == 'kinect':
+        from src.datasets.kinect import BODY_PARTS_PAF_IDS, BODY_PARTS_KPT_IDS
+        ignored = [31, 32]
+    else:
+        raise ModuleNotFoundError
     pose_entries = []
     all_keypoints = np.array([item for sublist in all_keypoints_by_type for item in sublist])
+
     for part_id in range(len(BODY_PARTS_PAF_IDS)):
         part_pafs = pafs[:, :, BODY_PARTS_PAF_IDS[part_id]]
         kpts_a = all_keypoints_by_type[BODY_PARTS_KPT_IDS[part_id][0]]
@@ -70,7 +74,7 @@ def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_sco
                 for j in range(len(pose_entries)):  # check if already in some pose, was added by another body part
                     if pose_entries[j][kpt_b_id] == kpts_b[i][3]:
                         num += 1
-                        continue
+                        break
                 if num == 0:
                     pose_entry = np.ones(pose_entry_size) * -1
                     pose_entry[kpt_b_id] = kpts_b[i][3]  # keypoint idx
@@ -84,7 +88,7 @@ def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_sco
                 for j in range(len(pose_entries)):
                     if pose_entries[j][kpt_a_id] == kpts_a[i][3]:
                         num += 1
-                        continue
+                        break
                 if num == 0:
                     pose_entry = np.ones(pose_entry_size) * -1
                     pose_entry[kpt_a_id] = kpts_a[i][3]
@@ -165,7 +169,7 @@ def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_sco
                 pose_entries[i][BODY_PARTS_KPT_IDS[0][1]] = connections[i][1]
                 pose_entries[i][-1] = 2
                 pose_entries[i][-2] = np.sum(all_keypoints[connections[i][0:2], 2]) + connections[i][2]
-        elif part_id == 17 or part_id == 18:
+        elif part_id in ignored:
             kpt_a_id = BODY_PARTS_KPT_IDS[part_id][0]
             kpt_b_id = BODY_PARTS_KPT_IDS[part_id][1]
             for i in range(len(connections)):
@@ -204,34 +208,29 @@ def group_keypoints(all_keypoints_by_type, pafs, pose_entry_size=20, min_paf_sco
 
 
 class Pose:
-    num_kpts = 18
-    kpt_names = ['nose', 'neck',
-                 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri',
-                 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank',
-                 'r_eye', 'l_eye',
-                 'r_ear', 'l_ear']
-    sigmas = np.array([.26, .79, .79, .72, .62, .79, .72, .62, 1.07, .87, .89, 1.07, .87, .89, .25, .25, .35, .35],
-                      dtype=np.float32) / 10.0
-    vars = (sigmas * 2) ** 2
     last_id = -1
-    color = [0, 224, 255]
+    color = [0, 0, 255]
 
-    def __init__(self, keypoints, confidence):
+    def __init__(self, keypoints, confidence, dataset='coco'):
         super().__init__()
+        self.dataset = dataset
+        if self.dataset == 'coco':
+            self.num_kpts = 18
+        elif self.dataset == 'kinect':
+            self.num_kpts = 32
         self.keypoints = keypoints
         self.confidence = confidence
-        self.bbox = Pose.get_bbox(self.keypoints)
+        self.bbox = self.get_bbox()
         self.id = None
-        self.filters = [[OneEuroFilter(), OneEuroFilter()] for _ in range(Pose.num_kpts)]
+        self.filters = [[OneEuroFilter(), OneEuroFilter()] for _ in range(self.num_kpts)]
 
-    @staticmethod
-    def get_bbox(keypoints):
-        found_keypoints = np.zeros((np.count_nonzero(keypoints[:, 0] != -1), 2), dtype=np.int32)
+    def get_bbox(self):
+        found_keypoints = np.zeros((np.count_nonzero(self.keypoints[:, 0] != -1), 2), dtype=np.int32)
         found_kpt_id = 0
-        for kpt_id in range(Pose.num_kpts):
-            if keypoints[kpt_id, 0] == -1:
+        for kpt_id in range(self.num_kpts):
+            if self.keypoints[kpt_id, 0] == -1:
                 continue
-            found_keypoints[found_kpt_id] = keypoints[kpt_id]
+            found_keypoints[found_kpt_id] = self.keypoints[kpt_id]
             found_kpt_id += 1
         bbox = cv2.boundingRect(found_keypoints)
         return bbox
@@ -243,7 +242,13 @@ class Pose:
             Pose.last_id += 1
 
     def draw(self, img):
-        assert self.keypoints.shape == (Pose.num_kpts, 2)
+        assert self.keypoints.shape == (self.num_kpts, 2)
+        if self.dataset == 'coco':
+            from src.datasets.coco import BODY_PARTS_PAF_IDS, BODY_PARTS_KPT_IDS
+        elif self.dataset == 'kinect':
+            from src.datasets.kinect import BODY_PARTS_PAF_IDS, BODY_PARTS_KPT_IDS
+        else:
+            raise ModuleNotFoundError
 
         for part_id in range(len(BODY_PARTS_PAF_IDS) - 2):
             kpt_a_id = BODY_PARTS_KPT_IDS[part_id][0]

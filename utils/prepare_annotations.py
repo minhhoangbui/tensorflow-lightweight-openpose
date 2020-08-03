@@ -2,25 +2,6 @@ import argparse
 import json
 import pickle
 
-# TODO: use multi-threading to split dataset
-
-
-def add_neck_keypoint(keypoints, w, h):
-    reorder_map = [1, 7, 9, 11, 6, 8, 10, 13, 15, 17, 12, 14, 16, 3, 2, 5, 4]
-    converted_keypoints = list(keypoints[i - 1] for i in reorder_map)
-    converted_keypoints.insert(1, [(keypoints[5][0] + keypoints[6][0]) / 2,
-                                   (keypoints[5][1] + keypoints[6][1]) / 2, 0])
-    if keypoints[5][2] == 2 or keypoints[6][2] == 2:
-        converted_keypoints[1][2] = 2
-    elif keypoints[5][2] == 1 and keypoints[6][2] == 1:
-        converted_keypoints[1][2] = 1
-    if (converted_keypoints[1][0] < 0
-            or converted_keypoints[1][0] >= w
-            or converted_keypoints[1][1] < 0
-            or converted_keypoints[1][1] >= h):
-        converted_keypoints[1][2] = 2
-    return converted_keypoints
-
 
 def prepare_annotations(annotations_per_image, images_info, net_input_size):
     """Prepare labels for training. For each annotated person calculates center
@@ -33,7 +14,7 @@ def prepare_annotations(annotations_per_image, images_info, net_input_size):
     prepared_annotations = {}
     image_ids = []
 
-    for _, annotations in annotations_per_image.items():
+    for image_id, annotations in annotations_per_image.items():
         previous_centers = []
         for annotation in annotations[0]:
             if (annotation['num_keypoints'] < 5
@@ -80,8 +61,6 @@ def prepare_annotations(annotations_per_image, images_info, net_input_size):
                         or keypoint[1] < 0
                         or keypoint[1] >= prepared_annotation['img_height']):
                     keypoint[2] = 2
-            keypoints = add_neck_keypoint(keypoints, prepared_annotation['img_width'],
-                                          prepared_annotation['img_height'])
             prepared_annotation['keypoints'] = keypoints
 
             prepared_other_annotations = []
@@ -113,26 +92,26 @@ def prepare_annotations(annotations_per_image, images_info, net_input_size):
                             or keypoint[1] < 0
                             or keypoint[1] >= prepared_annotation['img_height']):
                         keypoint[2] = 2
-                keypoints = add_neck_keypoint(keypoints, prepared_annotation['img_width'],
-                                              prepared_annotation['img_height'])
+
                 prepared_other_annotation['keypoints'] = keypoints
                 prepared_other_annotations.append(prepared_other_annotation)
 
-            prepared_annotation['processed_other_annotations'] = prepared_other_annotations
-            prepared_annotations[annotation['image_id']] = prepared_annotation
-            image_ids.append(annotation['image_id'])
             previous_centers.append((person_center[0], person_center[1], annotation['bbox'][2], annotation['bbox'][3]))
+            prepared_annotation['processed_other_annotations'] = prepared_other_annotations
+            prepared_annotations[image_id] = prepared_annotation
+            image_ids.append(image_id)
+            break
     return [image_ids, prepared_annotations]
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--labels', type=str, required=True, help='path to json with keypoints train labels')
-    parser.add_argument('--output-name', type=str, default='prepared_train_annotation.pkl',
+    parser.add_argument('--label', type=str, required=True, help='path to json with keypoints train labels')
+    parser.add_argument('--output', type=str, default='prepared_train_annotation.pkl',
                         help='name of output file with prepared keypoints annotation')
     parser.add_argument('--net-input-size', type=int, default=368, help='network input size')
     args = parser.parse_args()
-    with open(args.labels, 'r') as f:
+    with open(args.label, 'r') as f:
         data = json.load(f)
 
     annotations_per_image_mapping = {}
@@ -158,6 +137,7 @@ if __name__ == '__main__':
         images_info[image_info['id']] = image_info
 
     prepared_annotations = prepare_annotations(annotations_per_image_mapping, images_info, args.net_input_size)
-
-    with open(args.output_name, 'wb') as f:
+    print(len(prepared_annotations[0]))
+    print(len(prepared_annotations[1]))
+    with open(args.output, 'wb') as f:
         pickle.dump(prepared_annotations, f)

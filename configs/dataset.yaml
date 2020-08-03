@@ -1,4 +1,5 @@
-annotation_dir: '/home/hoangbm/datasets/coco2017'
+name: 'coco'
+annotation_dir: '/home/hoangbm/datasets/coco2017/test'
 image_dir: '/mnt/ssd2/Datasets/COCO2017/images'
 stride: 8
 sigma: 7
