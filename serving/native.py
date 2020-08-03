@@ -29,10 +29,8 @@ class Serving(BaseServing):
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
         pafs = np.squeeze(stages_output[-1][1].numpy())
-        # print(np.sum(heatmaps))
-        # print(pafs.sum())
-        for i in range(19):
-            print(np.sum(heatmaps[:, :, i]))
+        print(np.sum(heatmaps))
+        print(pafs.sum())
 
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,

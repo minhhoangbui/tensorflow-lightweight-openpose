@@ -5,7 +5,7 @@ MODEL:
 EXPORT:
   format: 'sm'
   quantized: True
-  saved_model: "/home/hoang/pose_models/pose_saved_model"
-  tf_lite: "/home/hoang/pose_models/poseT.tflite"
+  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model"
+  tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   checkpoint: "/home/hoangbm/checkpoint/pose-estimation/lw_pose_tf/ckpts/"
-  frozen_pb: "/home/hoang/pose_models/"
+  frozen_pb: "/home/hoangbm/model_library/lw-pose"

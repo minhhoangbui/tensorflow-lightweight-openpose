@@ -1,8 +1,8 @@
 COMMON:
-  GPU: '1,2'
+  GPU: '3,4,5'
   retrain: True
   saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
-  saved_epochs: 2
+  saved_epochs: 5
 MODEL:
   num_channels: 128
   num_stages: 1
@@ -14,11 +14,11 @@ DATASET:
   sigma: 7
   paf_thickness: 1
 TRAIN:
-  num_epochs: 40
-  learning_rate: 0.000005
+  num_epochs: 70
+  learning_rate: 0.0001
   decay_step: 5000
   decay_rate: 0.96
-  batch_size: 40
+  batch_size: 60
 VAL:
-  batch_size: 40
+  batch_size: 60
 
