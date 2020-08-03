@@ -4,24 +4,18 @@ import numpy as np
 import sys
 import yaml
 import os
-from serving.base import BaseServing
+from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 class Serving(BaseServing):
     def __init__(self, cfg):
         super(Serving, self).__init__(cfg)
-        self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
+        self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'],
+                                                compile=False)
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-
-        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                  interpolation=cv2.INTER_CUBIC)
-
-        scaled_image = (scaled_image - 128) / 255.0
-        scaled_image = np.expand_dims(scaled_image, axis=0)
+        scaled_image, scale = self.preprocess_image(image)
 
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
 

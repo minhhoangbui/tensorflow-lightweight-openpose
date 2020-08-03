@@ -137,7 +137,5 @@ if __name__ == '__main__':
         images_info[image_info['id']] = image_info
 
     prepared_annotations = prepare_annotations(annotations_per_image_mapping, images_info, args.net_input_size)
-    print(len(prepared_annotations[0]))
-    print(len(prepared_annotations[1]))
     with open(args.output, 'wb') as f:
         pickle.dump(prepared_annotations, f)

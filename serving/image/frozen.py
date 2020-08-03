@@ -4,7 +4,7 @@ import yaml
 import sys
 import cv2
 import numpy as np
-from serving.base import BaseServing
+from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
@@ -22,16 +22,11 @@ class FrozenServing(BaseServing):
         self.sess = tf.compat.v1.Session(graph=graph)
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                  interpolation=cv2.INTER_CUBIC)
-        scaled_image = (scaled_image - 128) / 255.0
-        scaled_image = np.float32(scaled_image)
-        scaled_image = np.expand_dims(scaled_image, axis=0)
+        scaled_image, scale = self.preprocess_image(image)
 
         [heatmaps, pafs] = self.sess.run(
-            [self.heatmaps, self.pafs], feed_dict={self.input: scaled_image}
+            [self.heatmaps, self.pafs],
+            feed_dict={self.input: scaled_image}
         )
 
         heatmaps = np.squeeze(heatmaps)

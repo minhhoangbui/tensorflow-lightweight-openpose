@@ -1,5 +1,5 @@
 COMMON:
-  GPU: '2'
+  GPU: '0'
   saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
@@ -13,5 +13,7 @@ MODEL:
 DATASET:
   annotations: "/mnt/ssd2/Datasets/COCO2017/annotations"
   images_dir: '/mnt/ssd2/Datasets/COCO2017/images'
-  image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/multi.jpg'
+  image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/m10.jpg'
   dataset_type: "train"
+  name: 'coco'
+

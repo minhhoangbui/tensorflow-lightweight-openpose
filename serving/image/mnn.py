@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import yaml
 import sys
-from serving.base import BaseServing
+from serving.image.base import BaseServing
 
 
 class MNNServing(BaseServing):
@@ -12,10 +12,14 @@ class MNNServing(BaseServing):
         self.interpreter = MNN.Interpreter(cfg['MODEL']['mnn'])
         self.session = self.interpreter.createSession()
         self.input_tensor = self.interpreter.getSessionInput(self.session)
-        self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session,
-                                                                 'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd')
-        self.pafs_tensor = self.interpreter.getSessionOutput(self.session,
-                                                             'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
+        if cfg['MODEL']['quantized']:
+            self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session, 'Int8ToFloat119')
+            self.pafs_tensor = self.interpreter.getSessionOutput(self.session, 'Int8ToFloat124')
+        else:
+            self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session,
+                                                                     'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd')
+            self.pafs_tensor = self.interpreter.getSessionOutput(self.session,
+                                                                 'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
 
         self.heatmaps_output = MNN.Tensor(self.heatmaps_tensor.getShape(), MNN.Halide_Type_Float,
                                           np.zeros(self.heatmaps_tensor.getShape(), dtype=np.float32),
@@ -25,13 +29,7 @@ class MNNServing(BaseServing):
                                       MNN.Tensor_DimensionType_Caffe)
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                  interpolation=cv2.INTER_CUBIC)
-        scaled_image = (scaled_image - 128) / 255.0
-        scaled_image = np.float32(scaled_image)
-        scaled_image = np.expand_dims(scaled_image, axis=0)
+        scaled_image, scale = self.preprocess_image(image)
 
         tmp_input = MNN.Tensor((1, self.input_size, self.input_size, 3),
                                MNN.Halide_Type_Float, scaled_image,
