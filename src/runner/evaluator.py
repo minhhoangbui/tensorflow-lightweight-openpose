@@ -66,6 +66,16 @@ class BaseEvaluator:
         self.stride = cfg['MODEL']['stride']
         self.output = cfg['COMMON']['output']
 
+    def preprocess_image(self, image):
+        height, width, _ = image.shape
+        scale = (self.input_size / width, self.input_size / height)
+
+        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
+                                  interpolation=cv2.INTER_CUBIC)
+        scaled_image = (scaled_image - 128) / 255.0
+        scaled_image = np.expand_dims(scaled_image, axis=0)
+        return scaled_image, scale
+
     def evaluate(self):
         coco_result = []
         for file_name in self.dataset.sample:
@@ -110,14 +120,8 @@ class TFEvaluator(BaseEvaluator):
         self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-
-        scaled_img = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                interpolation=cv2.INTER_CUBIC)
-        scaled_img = (scaled_img - 128) / 255.0
-        scaled_img = np.expand_dims(scaled_img, axis=0)
-        stages_output = self.model(scaled_img, training=False)
+        scaled_image, scale = self.preprocess_image(image)
+        stages_output = self.model(scaled_image, training=False)
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
         heatmaps = cv2.resize(heatmaps, (0, 0), fx=self.stride, fy=self.stride,
@@ -139,14 +143,10 @@ class TFLiteEvaluator(BaseEvaluator):
         self.output_details = self.interpreter.get_output_details()
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                  interpolation=cv2.INTER_CUBIC)
-        scaled_image = (scaled_image - 128) / 255.0
-        scaled_image = np.float32(scaled_image)
 
-        scaled_image = np.expand_dims(scaled_image, axis=0)
+        scaled_image, scale = self.preprocess_image(image)
+
+        scaled_image = np.float32(scaled_image)
         self.interpreter.set_tensor(self.input_details[0]['index'], scaled_image)
         self.interpreter.invoke()
         heatmaps = np.squeeze(self.interpreter.get_tensor(self.output_details[-2]['index']))
@@ -167,10 +167,14 @@ class MNNEvaluator(BaseEvaluator):
         self.interpreter = MNN.Interpreter(cfg['MODEL']['mnn'])
         self.session = self.interpreter.createSession()
         self.input_tensor = self.interpreter.getSessionInput(self.session)
-        self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session,
-                                                                 'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd')
-        self.pafs_tensor = self.interpreter.getSessionOutput(self.session,
-                                                             'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
+        if cfg['MODEL']['quantized']:
+            self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session, 'Int8ToFloat119')
+            self.pafs_tensor = self.interpreter.getSessionOutput(self.session, 'Int8ToFloat124')
+        else:
+            self.heatmaps_tensor = self.interpreter.getSessionOutput(self.session,
+                                                                     'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_11/conv_26/RefinementStage_heat_conv2d/BiasAdd')
+            self.pafs_tensor = self.interpreter.getSessionOutput(self.session,
+                                                                'light_weight_open_pose/StatefulPartitionedCall/StatefulPartitionedCall/refinement_stage/sequential_12/conv_28/RefinementStage_paf_conv2d/BiasAdd')
 
         self.heatmaps_output = MNN.Tensor(self.heatmaps_tensor.getShape(), MNN.Halide_Type_Float,
                                           np.zeros(self.heatmaps_tensor.getShape(), dtype=np.float32),
@@ -180,14 +184,9 @@ class MNNEvaluator(BaseEvaluator):
                                       MNN.Tensor_DimensionType_Caffe)
 
     def infer(self, image):
-        height, width, _ = image.shape
-        scale = (self.input_size / width, self.input_size / height)
-        scaled_image = cv2.resize(image, (0, 0), fx=scale[0], fy=scale[1],
-                                  interpolation=cv2.INTER_CUBIC)
-        scaled_image = (scaled_image - 128) / 255.0
-        scaled_image = np.float32(scaled_image)
-        scaled_image = np.expand_dims(scaled_image, axis=0)
+        scaled_image, scale = self.preprocess_image(image)
 
+        scaled_image = np.float32(scaled_image)
         tmp_input = MNN.Tensor((1, self.input_size, self.input_size, 3),
                                MNN.Halide_Type_Float, scaled_image,
                                MNN.Tensor_DimensionType_Tensorflow)

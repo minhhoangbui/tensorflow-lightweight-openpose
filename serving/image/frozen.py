@@ -3,6 +3,7 @@ import os
 import yaml
 import sys
 import cv2
+import time
 import numpy as np
 from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -23,11 +24,13 @@ class FrozenServing(BaseServing):
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
-
-        [heatmaps, pafs] = self.sess.run(
-            [self.heatmaps, self.pafs],
-            feed_dict={self.input: scaled_image}
-        )
+        start = time.time()
+        for _ in range(100):
+            [heatmaps, pafs] = self.sess.run(
+                [self.heatmaps, self.pafs],
+                feed_dict={self.input: scaled_image}
+            )
+        print(time.time() - start)
 
         heatmaps = np.squeeze(heatmaps)
         pafs = np.squeeze(pafs)

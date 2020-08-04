@@ -3,7 +3,7 @@ import sys
 import yaml
 import tensorflow as tf
 
-from src.runner.evaluator import MNNEvaluator
+from src.runner.evaluator import TFEvaluator
 
 
 def main(cfg):
@@ -13,7 +13,7 @@ def main(cfg):
     print("There are {} gpus running".format(len(available_gpus)))
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
-    evaluator = MNNEvaluator(cfg)
+    evaluator = TFEvaluator(cfg)
     evaluator.evaluate()
 
 

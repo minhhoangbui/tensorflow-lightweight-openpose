@@ -4,12 +4,17 @@ import tensorflow as tf
 class Conv(tf.keras.layers.Layer):
     def __init__(self, out_channels, kernel_size=3,
                  bn=True, dilation=1, stride=1, relu=True,
-                 bias=True, name=''
+                 bias=True, mobile=False, name=''
                  ):
         super(Conv, self).__init__()
+        if mobile:
+            groups = 4
+        else:
+            groups = 1
         self.conv2d = tf.keras.layers.Conv2D(
-            filters=out_channels, kernel_size=kernel_size, strides=stride, padding='same',
-            dilation_rate=dilation, use_bias=bias, name=name+'_conv2d'
+            filters=out_channels, kernel_size=kernel_size, strides=stride,
+            padding='same', groups=groups, dilation_rate=dilation, use_bias=bias,
+            name=name+'_conv2d',
         )
         if bn:
             self.bn = tf.keras.layers.BatchNormalization(name=name+'_bn')
@@ -51,12 +56,13 @@ class ConvDW(tf.keras.layers.Layer):
 
 
 class RefinementBlock(tf.keras.layers.Layer):
-    def __init__(self, out_channels, name=''):
+    def __init__(self, out_channels, mobile=False, name=''):
         super(RefinementBlock, self).__init__()
-        self.initial_conv = Conv(out_channels=out_channels, kernel_size=1, name=name+'_initial')
+        self.initial_conv = Conv(out_channels=out_channels, kernel_size=1,
+                                 mobile=mobile, name=name+'_initial')
         self.conv_truck = tf.keras.Sequential([
-            Conv(out_channels=out_channels, name=name + '_truck1'),
-            Conv(out_channels=out_channels, name=name + '_truck2')
+            Conv(out_channels=out_channels, mobile=mobile, name=name + '_truck1'),
+            Conv(out_channels=out_channels, mobile=mobile, name=name + '_truck2')
         ])
         self.add = tf.keras.layers.Add(name=name+'_add')
 

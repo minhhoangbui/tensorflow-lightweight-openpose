@@ -2,10 +2,11 @@ MODEL:
   num_channels: 128
   num_stages: 1
   input_size: 368
+  mobile: True
 EXPORT:
   format: 'sm'
   quantized: True
-  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model"
+  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_True"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/lw_pose_tf/ckpts/"
+  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_pose_True/ckpts/"
   frozen_pb: "/home/hoangbm/model_library/lw-pose"

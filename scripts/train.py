@@ -4,7 +4,7 @@ import yaml
 import tensorflow as tf
 
 from src.runner.trainer import Trainer
-from src.datasets.coco import CocoDataset
+from src import datasets
 
 
 def main(cfg):
@@ -15,24 +15,30 @@ def main(cfg):
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
     mirrored_strategy = tf.distribute.MirroredStrategy()
-    train_dataset = CocoDataset(annotations_dir=cfg['DATASET']['annotation_dir'],
-                                images_dir=cfg['DATASET']['image_dir'],
-                                input_size=cfg['MODEL']['input_size'],
-                                stride=cfg['DATASET']['stride'],
-                                sigma=cfg['DATASET']['sigma'],
-                                paf_thickness=cfg['DATASET']['paf_thickness'],
-                                is_training=True).get_dataset(cfg['TRAIN']['batch_size'])
+    train_dataset = datasets.__dict__[cfg['DATASET']['name']](
+        annotations_dir=cfg['DATASET']['annotation_dir'],
+        images_dir=cfg['DATASET']['image_dir'],
+        input_size=cfg['MODEL']['input_size'],
+        stride=cfg['DATASET']['stride'],
+        sigma=cfg['DATASET']['sigma'],
+        paf_thickness=cfg['DATASET']['paf_thickness'],
+        is_training=True)
+    num_train_batch = len(train_dataset) // cfg['TRAIN']['batch_size']
+    train_dataset = train_dataset.get_dataset(cfg['TRAIN']['batch_size'])
     train_dist_dataset = mirrored_strategy.experimental_distribute_dataset(train_dataset)
-    val_dataset = CocoDataset(annotations_dir=cfg['DATASET']['annotation_dir'],
-                              images_dir=cfg['DATASET']['image_dir'],
-                              input_size=cfg['MODEL']['input_size'],
-                              stride=cfg['DATASET']['stride'],
-                              sigma=cfg['DATASET']['sigma'],
-                              paf_thickness=cfg['DATASET']['paf_thickness'],
-                              is_training=False).get_dataset(cfg['VAL']['batch_size'])
+    val_dataset = datasets.__dict__[cfg['DATASET']['name']](
+        annotations_dir=cfg['DATASET']['annotation_dir'],
+        images_dir=cfg['DATASET']['image_dir'],
+        input_size=cfg['MODEL']['input_size'],
+        stride=cfg['DATASET']['stride'],
+        sigma=cfg['DATASET']['sigma'],
+        paf_thickness=cfg['DATASET']['paf_thickness'],
+        is_training=False)
+    num_val_batch = len(val_dataset) // cfg['VAL']['batch_size']
+    val_dataset = val_dataset.get_dataset(cfg['VAL']['batch_size'])
     val_dist_dataset = mirrored_strategy.experimental_distribute_dataset(val_dataset)
     trainer = Trainer(cfg, mirrored_strategy)
-    trainer.distributed_custom_loop(train_dist_dataset, val_dist_dataset)
+    trainer.distributed_custom_loop(train_dist_dataset, val_dist_dataset, num_train_batch, num_val_batch)
 
 
 if __name__ == '__main__':
