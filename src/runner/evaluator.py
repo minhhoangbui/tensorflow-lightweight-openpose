@@ -3,12 +3,15 @@ import json
 import os
 from abc import abstractmethod
 import numpy as np
+import logging
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 import MNN
 import tensorflow as tf
+from openvino.inference_engine import IECore
 from src.utils.keypoints_grouping import extract_keypoints, group_keypoints
 from src.datasets.coco import CocoValDataset
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 def convert_to_coco_format(pose_entries, all_keypoints):
@@ -118,6 +121,7 @@ class TFEvaluator(BaseEvaluator):
     def __init__(self, cfg):
         super(TFEvaluator, self).__init__(cfg)
         self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'], compile=False)
+        logging.info(f"Finished loading model from {cfg['MODEL']['saved_model_dir']}")
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
@@ -211,6 +215,40 @@ class MNNEvaluator(BaseEvaluator):
                           fx=self.stride, fy=self.stride,
                           interpolation=cv2.INTER_CUBIC)
 
+        return heatmaps, pafs, scale
+
+
+class OpenVinoEvaluator(BaseEvaluator):
+    def __init__(self, cfg):
+        super(OpenVinoEvaluator, self).__init__(cfg)
+        ie = IECore()
+        model = ie.read_network(cfg['MODEL']['openvino'],
+                                os.path.splitext(cfg['MODEL']['openvino'])[0] + '.bin')
+
+        assert len(model.input_info) == 1, "Expected 1 input blob"
+
+        self._input_layer_name = next(iter(model.input_info))
+        self._output_layer_name = list(model.outputs.keys())
+        self.exec_model = ie.load_network(model, cfg['COMMON']['device'])
+        logging.info(f"Finished loading model from {cfg['MODEL']['openvino']}")
+
+    def infer(self, image):
+        scaled_image, scale = self.preprocess_image(image)
+        scaled_image = np.transpose(scaled_image, axes=(0, 3, 1, 2))
+
+        output = self.exec_model.infer(inputs={self._input_layer_name: scaled_image})
+        heatmaps = np.squeeze(output[self._output_layer_name[0]])
+        pafs = np.squeeze(output[self._output_layer_name[1]])
+
+        heatmaps = heatmaps.transpose((1, 2, 0))
+        pafs = pafs.transpose((1, 2, 0))
+
+        heatmaps = cv2.resize(heatmaps, (0, 0),
+                              fx=self.stride, fy=self.stride,
+                              interpolation=cv2.INTER_CUBIC)
+        pafs = cv2.resize(pafs, (0, 0),
+                          fx=self.stride, fy=self.stride,
+                          interpolation=cv2.INTER_CUBIC)
         return heatmaps, pafs, scale
 
 

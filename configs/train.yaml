@@ -1,13 +1,14 @@
 COMMON:
-  GPU: '0,1,2'
+  GPU: '3,5'
   retrain: True
   saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   saved_epochs: 5
 MODEL:
+  name: 'lw'
   num_channels: 128
   num_stages: 1
   input_size: 368
-  mobile: False
+  mobile: True
 DATASET:
   name: 'coco'
   annotation_dir: '/home/hoangbm/datasets/coco2017/test/'
@@ -16,11 +17,11 @@ DATASET:
   sigma: 7
   paf_thickness: 1
 TRAIN:
-  num_epochs: 80
-  learning_rate: 0.001
+  num_epochs: 60
+  learning_rate: 0.0001
   decay_step: 5000
   decay_rate: 0.96
-  batch_size: 60
+  batch_size: 40
 VAL:
-  batch_size: 60
+  batch_size: 40
 

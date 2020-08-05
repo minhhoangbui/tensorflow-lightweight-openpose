@@ -2,9 +2,12 @@ import os
 import tensorflow as tf
 import numpy as np
 import datetime
+import sys
+import logging
 from tensorflow.keras.utils import Progbar
 from src.utils.loss import get_loss
-from src.models.lightweight_openpose import LightWeightOpenPose
+from src import models
+logging.basicConfig(format='[ %(levelname)s ] %(message)s', level=logging.INFO, stream=sys.stdout)
 
 
 class Trainer(object):
@@ -13,6 +16,13 @@ class Trainer(object):
         self.strategy = strategy
         self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'],
                                       f"{cfg['DATASET']['name']}_lw_pose_{cfg['MODEL']['mobile']}")
+        if cfg['DATASET']['name'] == 'coco':
+            num_joints = 19
+        elif cfg['DATASET']['name'] == 'kinect':
+            num_joints = 33
+        else:
+            raise NotImplementedError
+        num_pafs = num_joints * 2
 
         with self.strategy.scope():
             lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
@@ -22,9 +32,10 @@ class Trainer(object):
                 staircase=True
             )
             self.optimizer = tf.keras.optimizers.RMSprop(learning_rate=lr_schedule)
-            self.model = LightWeightOpenPose(num_channels=cfg['MODEL']['num_channels'],
-                                             num_refinement_stages=cfg['MODEL']['num_stages'],
-                                             mobile=cfg['MODEL']['mobile'])
+            self.model = models.__dict__[cfg['MODEL']['name']](num_channels=cfg['MODEL']['num_channels'],
+                                                               num_refinement_stages=cfg['MODEL']['num_stages'],
+                                                               num_joints=num_joints, num_pafs=num_pafs,
+                                                               mobile=cfg['MODEL']['mobile'])
             self.model.build((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3))
             self.model.summary()
 
@@ -43,20 +54,14 @@ class Trainer(object):
     def _restore_weight(self):
         if self.manager.latest_checkpoint:
             self.checkpoint.restore(self.manager.latest_checkpoint).assert_consumed()
-            print("Restored from {}".format(self.manager.latest_checkpoint))
+            logging.info(f"Restored from {self.manager.latest_checkpoint}")
         else:
-            print("Initializing from scratch.")
+            logging.info("Initializing from scratch.")
 
     def _setup_logger(self):
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.saved_dir, 'logs', current_time)
-        # tf.summary.trace_on(graph=True, profiler=True)
         self.writer = tf.summary.create_file_writer(log_dir)
-        # with self.writer.as_default():
-        #     tf.summary.trace_export(
-        #         name="model_trace",
-        #         step=0, profiler_outdir=log_dir
-        #     )
 
     @tf.function
     def train_step(self, inputs):
@@ -109,11 +114,11 @@ class Trainer(object):
     def custom_loop(self, train_dataset, val_dataset, num_train_batch, num_val_batch):
         epoch = last_epoch = int(self.checkpoint.epoch)
         if self.cfg['TRAIN']['num_epochs'] <= int(self.checkpoint.epoch):
-            print("Already reached this epoch")
+            logging.info("Already reached this epoch")
             return
         for ep in range(self.cfg['TRAIN']['num_epochs'] - last_epoch):
             epoch = ep + 1 + last_epoch
-            print('Start of epoch %d' % epoch)
+            logging.info(f'Start of epoch {epoch}')
             self.checkpoint.epoch.assign_add(1)
             train_loss = 0
             val_loss = 0
@@ -126,34 +131,32 @@ class Trainer(object):
                 train_progbar.update(step + 1, [('loss', current_loss)])
                 train_loss += current_loss
             train_loss /= step + 1
-            print("Training - Epoch {}: loss {:1.2f}\n".format(epoch, train_loss))
 
             for step, dist_inputs in enumerate(val_dataset):
                 current_loss = self.eval_step(dist_inputs)
                 val_progbar.update(step + 1, [('loss', current_loss)])
                 val_loss += current_loss
             val_loss /= step + 1
-            print("Evaluating - Epoch {}: loss {:1.2f}\n".format(epoch, val_loss))
 
             with self.writer.as_default():
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-
+            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
-                print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))
-        print("Finish training at %d" % epoch)
+                logging.info(f"Saved checkpoint for epoch {epoch}: {saved_path}")
+        logging.info(f"Finish training at {epoch}")
         self.writer.close()
 
     def distributed_custom_loop(self, train_dist_dataset, val_dist_dataset, num_train_batch, num_val_batch):
         epoch = last_epoch = int(self.checkpoint.epoch)
         if self.cfg['TRAIN']['num_epochs'] <= int(self.checkpoint.epoch):
-            print("Already reached this epoch")
+            logging.info("Already reached this epoch")
             return
         for ep in range(self.cfg['TRAIN']['num_epochs'] - last_epoch):
             epoch = ep + 1 + last_epoch
-            print('Start of epoch %d' % epoch)
+            logging.info(f'Start of epoch {epoch}')
             self.checkpoint.epoch.assign_add(1)
             train_loss = 0
             val_loss = 0
@@ -177,9 +180,7 @@ class Trainer(object):
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-            template = 'Epoch {}, Loss: {}, Test Loss: {}'
-            print(template.format(epoch, train_loss,
-                                  val_loss))
+            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))

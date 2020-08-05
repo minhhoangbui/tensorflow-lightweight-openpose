@@ -1,11 +1,14 @@
 import tensorflow as tf
 import cv2
 import numpy as np
+import logging
 import sys
 import yaml
 import os
+from time import perf_counter
 from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 class Serving(BaseServing):
@@ -13,18 +16,20 @@ class Serving(BaseServing):
         super(Serving, self).__init__(cfg)
         self.model = tf.keras.models.load_model(cfg['MODEL']['saved_model_dir'],
                                                 compile=False)
+        logging.info(f"Finished loading model from {cfg['MODEL']['saved_model_dir']}")
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
 
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
-
-        stages_output = self.model(tensor_input)
+        t_start = perf_counter()
+        for _ in range(1000):
+            stages_output = self.model(tensor_input)
+        t_end = perf_counter()
+        print(f'Elapsed time: {(t_end - t_start)/ 1000}')
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
         pafs = np.squeeze(stages_output[-1][1].numpy())
-        print(np.sum(heatmaps))
-        print(pafs.sum())
 
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,

@@ -110,4 +110,10 @@ class LightWeightOpenPose(tf.keras.Model):
         return stages_output
 
 
+def lw(**kwargs):
+    return LightWeightOpenPose(num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
+                               num_refinement_stages=kwargs['num_refinement_stages'],
+                               num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
+
+
 

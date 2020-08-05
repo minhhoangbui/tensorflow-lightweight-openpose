@@ -3,10 +3,12 @@ import os
 import yaml
 import sys
 import cv2
-import time
+import logging
+from time import perf_counter
 import numpy as np
 from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 class FrozenServing(BaseServing):
@@ -21,21 +23,21 @@ class FrozenServing(BaseServing):
         self.heatmaps = graph.get_tensor_by_name('Identity_2:0')
         self.pafs = graph.get_tensor_by_name('Identity_3:0')
         self.sess = tf.compat.v1.Session(graph=graph)
+        logging.info(f"Finished loading model from {cfg['MODEL']['frozen_graph']}")
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
-        start = time.time()
-        for _ in range(100):
+        start = perf_counter()
+        for _ in range(1000):
             [heatmaps, pafs] = self.sess.run(
                 [self.heatmaps, self.pafs],
                 feed_dict={self.input: scaled_image}
             )
-        print(time.time() - start)
+        end = perf_counter()
+        print(f'Elapsed time: {(end - start)/ 1000}')
 
         heatmaps = np.squeeze(heatmaps)
         pafs = np.squeeze(pafs)
-        print(np.sum(heatmaps))
-        print(pafs.sum())
 
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,

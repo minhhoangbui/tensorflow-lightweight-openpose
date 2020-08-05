@@ -8,5 +8,5 @@ EXPORT:
   quantized: True
   saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_True"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_pose_True/ckpts/"
-  frozen_pb: "/home/hoangbm/model_library/lw-pose"
+  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_pose_False/ckpts/"
+  frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_True.pb"

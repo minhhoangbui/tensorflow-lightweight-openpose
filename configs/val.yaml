@@ -5,17 +5,16 @@ COMMON:
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
 MODEL:
-  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model"
+  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model_True"
   tflite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   mnn: "/home/hoangbm/model_library/lw-pose/pose.mnn"
-  frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_True.pb"
-  openvino: '/home/hoangbm/model_library/lw-pose/openvino/lw_pose.xml'
+  frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_False.pb"
+  openvino: '/home/hoangbm/model_library/lw-pose/openvino/lw_pose_16.xml'
   input_size: 368
   stride: 8
 DATASET:
   annotations: "/mnt/ssd2/Datasets/COCO2017/annotations"
   images_dir: '/mnt/ssd2/Datasets/COCO2017/images'
   image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/cr7.jpg'
-  dataset_type: "train"
+  dataset_type: "val"
   name: 'coco'
-

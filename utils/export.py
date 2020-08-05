@@ -66,16 +66,16 @@ def export_frozen_graph(cfg):
     #     graph = func.graph
     #     summary_ops_v2.graph(graph.as_graph_def())
     # graph_writer.close()
-
+    log_dir, filename = os.path.split(cfg['EXPORT']['frozen_pb'])
     frozen_func = convert_variables_to_constants_v2(func)
     frozen_func.graph.as_graph_def()
     tf.io.write_graph(graph_or_graph_def=frozen_func.graph,
-                      logdir=cfg['EXPORT']['frozen_pb'],
-                      name='pose_True.pb', as_text=False)
+                      logdir=log_dir,
+                      name=filename, as_text=False)
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "2"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "5"
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
