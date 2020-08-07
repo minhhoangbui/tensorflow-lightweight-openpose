@@ -44,9 +44,6 @@ class MNNServing(BaseServing):
         heatmaps = np.squeeze(self.heatmaps_output.getData())
         pafs = np.squeeze(self.pafs_output.getData())
 
-        print(np.sum(heatmaps))
-        print(np.sum(pafs))
-
         heatmaps = heatmaps.transpose((1, 2, 0))
         pafs = pafs.transpose((1, 2, 0))
 
