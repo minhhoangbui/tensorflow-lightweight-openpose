@@ -22,11 +22,8 @@ class Serving(BaseServing):
         scaled_image, scale = self.preprocess_image(image)
 
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
-        t_start = perf_counter()
-        for _ in range(1000):
-            stages_output = self.model(tensor_input)
-        t_end = perf_counter()
-        print(f'Elapsed time: {(t_end - t_start)/ 1000}')
+
+        stages_output = self.model(tensor_input)
 
         heatmaps = np.squeeze(stages_output[-1][0].numpy())
         pafs = np.squeeze(stages_output[-1][1].numpy())

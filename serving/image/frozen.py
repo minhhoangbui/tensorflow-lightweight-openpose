@@ -4,7 +4,6 @@ import yaml
 import sys
 import cv2
 import logging
-from time import perf_counter
 import numpy as np
 from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -27,14 +26,10 @@ class FrozenServing(BaseServing):
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
-        start = perf_counter()
-        for _ in range(1000):
-            [heatmaps, pafs] = self.sess.run(
-                [self.heatmaps, self.pafs],
-                feed_dict={self.input: scaled_image}
-            )
-        end = perf_counter()
-        print(f'Elapsed time: {(end - start)/ 1000}')
+        [heatmaps, pafs] = self.sess.run(
+            [self.heatmaps, self.pafs],
+            feed_dict={self.input: scaled_image}
+        )
 
         heatmaps = np.squeeze(heatmaps)
         pafs = np.squeeze(pafs)
