@@ -15,7 +15,7 @@ class Trainer(object):
         self.cfg = cfg
         self.strategy = strategy
         self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'],
-                                      f"{cfg['DATASET']['name']}_lw_pose_{cfg['MODEL']['mobile']}")
+                                      f"{cfg['DATASET']['name']}_{cfg['MODEL']['name']}_{cfg['MODEL']['mobile']}")
         if cfg['DATASET']['name'] == 'coco':
             num_joints = 19
         elif cfg['DATASET']['name'] == 'kinect':
