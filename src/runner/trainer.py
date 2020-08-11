@@ -36,12 +36,10 @@ class Trainer(object):
                                                                num_refinement_stages=cfg['MODEL']['num_stages'],
                                                                num_joints=num_joints, num_pafs=num_pafs,
                                                                mobile=cfg['MODEL']['mobile'])
-            self.model.build((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3))
-            self.model.summary()
-
             # initialize model
             self.model(np.zeros((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
                                 dtype=np.float32))
+            self.model.summary()
 
         self.checkpoint = tf.train.Checkpoint(epoch=tf.Variable(0), model=self.model)
         self.manager = tf.train.CheckpointManager(checkpoint=self.checkpoint,

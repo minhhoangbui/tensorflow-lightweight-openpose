@@ -1,17 +1,17 @@
 COMMON:
-  GPU: '3,5'
-  retrain: True
-  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
+  GPU: '1'
+  retrain: False
+  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/test"
   saved_epochs: 5
 MODEL:
-  name: 'lw'
+  name: 'lw_shufflenetv2'
   num_channels: 128
   num_stages: 1
   input_size: 368
   mobile: True
 DATASET:
   name: 'coco'
-  annotation_dir: '/home/hoangbm/datasets/coco2017/test/'
+  annotation_dir: '/home/hoangbm/datasets/coco2017/'
   image_dir: '/mnt/ssd2/Datasets/COCO2017/images'
   stride: 8
   sigma: 7
@@ -21,7 +21,7 @@ TRAIN:
   learning_rate: 0.0001
   decay_step: 5000
   decay_rate: 0.96
-  batch_size: 40
+  batch_size: 10
 VAL:
-  batch_size: 40
+  batch_size: 10
 
