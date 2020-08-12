@@ -1,7 +1,7 @@
 COMMON:
-  GPU: '0,1'
-  retrain: False
-  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/test"
+  GPU: '1,2'
+  retrain: True
+  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   saved_epochs: 5
 MODEL:
   name: 'lw_shufflenetv2'

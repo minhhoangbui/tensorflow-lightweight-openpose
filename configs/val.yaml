@@ -1,11 +1,11 @@
 COMMON:
-  GPU: '5'
+  GPU: '2'
   device: 'CPU'
   saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
 MODEL:
-  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model_True"
+  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model_s2"
   tflite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   mnn: "/home/hoangbm/model_library/lw-pose/pose.mnn"
   frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_False.pb"
@@ -15,6 +15,6 @@ MODEL:
 DATASET:
   annotations: "/mnt/ssd2/Datasets/COCO2017/annotations"
   images_dir: '/mnt/ssd2/Datasets/COCO2017/images'
-  image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/cr7.jpg'
+  image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/h17.jpg'
   dataset_type: "val"
   name: 'coco'
