@@ -100,7 +100,7 @@ class PoseEstimator(Model):
         super(PoseEstimator, self).__init__(*args, **kwargs)
         self.image_blob_name = self._get_inputs()
         self.stride = 8
-        self.output_blob_name = list(net.outputs.keys())
+        self.output_blob_name = list(self.net.outputs.keys())
         self.n, self.c, self.h, self.w = self.net.input_info[self.image_blob_name].input_data.shape
         assert self.n == 1, 'Only batch size == 1 is supported.'
 
@@ -143,44 +143,25 @@ class PoseEstimator(Model):
         return heatmaps, pafs, meta['scale']
 
 
-def get_plugin_configs(device, num_streams, num_threads):
-    config_user_specified = {}
-    config_min_latency = {}
+if __name__ == '__main__':
+    log.info('Initializing Inference Engine...')
+    args = None
 
-    devices_nstreams = {}
-    if num_streams:
-        devices_nstreams = {device: num_streams for device in ['CPU', 'GPU'] if device in device} \
-            if num_streams.isdigit() \
-            else dict(device.split(':', 1) for device in num_streams.split(','))
+    plugin_config = {'CPU_THROUGHPUT_STREAMS': 1}
+    completed_request_result = {}
+    exceptions = []
 
-    if 'CPU' in device:
-        if num_threads is not None:
-            config_user_specified['CPU_THREADS_NUM'] = str(num_threads)
-        if 'CPU' in devices_nstreams:
-            config_user_specified['CPU_THROUGHPUT_STREAMS'] = devices_nstreams['CPU'] \
-                if int(devices_nstreams['CPU']) > 0 \
-                else 'CPU_THROUGHPUT_AUTO'
+    estimator = PoseEstimator(device=args.device, plugin_config=plugin_config,
+                              results=completed_request_result, max_num_requests=args.num_infer_request,
+                              caught_exceptions=exceptions)
+    cap = cv2.VideoCapture(args.input)
+    wait_key_time = 1
+    next_frame_id = 0
+    next_frame_id_to_show = 0
+    input_repeats = 0
 
-        config_min_latency['CPU_THROUGHPUT_STREAMS'] = '1'
-
-    if 'GPU' in device:
-        if 'GPU' in devices_nstreams:
-            config_user_specified['GPU_THROUGHPUT_STREAMS'] = devices_nstreams['GPU'] \
-                if int(devices_nstreams['GPU']) > 0 \
-                else 'GPU_THROUGHPUT_AUTO'
-
-        config_min_latency['GPU_THROUGHPUT_STREAMS'] = '1'
-
-    return config_user_specified, config_min_latency
-
-device = 'CPU'
-ie = IECore()
-xml_file_path = '/home/hoangbm/model_library/lw-pose/openvino/lw_pose_16.xml'
-bin_file_path = osp.splitext(xml_file_path)[0] + '.bin'
-
-config_user_specified, config_min_latency = get_plugin_configs(device, '', 3)
-
-net = ie.read_network(model=xml_file_path, weights=bin_file_path)
-exec_net = ie.load_network(net, device, config=config_min_latency, num_requests=3)
-requests = exec_net.requests
-print(requests)
+    log.info('Starting inference...')
+    presenter = monitors.Presenter(args.utilization_monitors, 55,
+                                   (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 4),
+                                    round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) / 8))
+                                   )
