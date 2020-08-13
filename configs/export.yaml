@@ -11,4 +11,4 @@ EXPORT:
   saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_s2"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_shufflenetv2_True/ckpts/"
-  frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_True.pb"
+  frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"

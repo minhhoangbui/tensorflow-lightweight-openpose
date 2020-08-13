@@ -12,7 +12,7 @@ def main(cfg):
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
-    evaluator = OpenVinoEvaluator(cfg)
+    evaluator = TFEvaluator(cfg)
     evaluator.evaluate()
 
 

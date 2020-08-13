@@ -2,6 +2,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import datetime
+import time
 import sys
 import logging
 from tensorflow.keras.utils import Progbar
@@ -123,7 +124,7 @@ class Trainer(object):
             step = None
             train_progbar = Progbar(target=num_train_batch, stateful_metrics=['loss'])
             val_progbar = Progbar(target=num_val_batch, stateful_metrics=['loss'])
-
+            start_time = time.time()
             for step, dist_inputs in enumerate(train_dataset):
                 current_loss = self.train_step(dist_inputs)
                 train_progbar.update(step + 1, [('loss', current_loss)])
@@ -135,12 +136,14 @@ class Trainer(object):
                 val_progbar.update(step + 1, [('loss', current_loss)])
                 val_loss += current_loss
             val_loss /= step + 1
+            end_time = time.time()
 
             with self.writer.as_default():
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
+            logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
+                         f'Loss: {train_loss}, Test Loss: {val_loss}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 logging.info(f"Saved checkpoint for epoch {epoch}: {saved_path}")
@@ -161,7 +164,7 @@ class Trainer(object):
             step = None
             train_progbar = Progbar(target=num_train_batch, stateful_metrics=['loss'])
             val_progbar = Progbar(target=num_val_batch, stateful_metrics=['loss'])
-
+            start_time = time.time()
             for step, dist_inputs in enumerate(train_dist_dataset):
                 current_loss = self.distributed_train_step(dist_inputs)
                 train_progbar.update(step + 1, [('loss', current_loss)])
@@ -173,12 +176,14 @@ class Trainer(object):
                 val_progbar.update(step + 1, [('loss', current_loss)])
                 val_loss += current_loss
             val_loss /= step + 1
+            end_time = time.time()
 
             with self.writer.as_default():
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
+            logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
+                         f'Loss: {train_loss}, Test Loss: {val_loss}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))

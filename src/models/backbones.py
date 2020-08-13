@@ -37,7 +37,7 @@ class MobileNetV2(tf.keras.layers.Layer):
 class ShuffleNetV2(tf.keras.layers.Layer):
     def __init__(self):
         super(ShuffleNetV2, self).__init__()
-        stage_out_channels = [-1, 24, 116, 232]
+        stage_out_channels = [-1, 48, 232, 464]
         stage_repeats = [4, 8]
         input_channel = stage_out_channels[1]
         self.first_conv = tf.keras.layers.Conv2D(filters=input_channel,

@@ -92,6 +92,6 @@ if __name__ == '__main__':
     config = sys.argv[1]
     with open(config, 'r') as fp:
         cfg = yaml.full_load(fp)
-    export_saved_model(cfg)
+    # export_saved_model(cfg)
     # export_tflite(cfg)
-    # export_frozen_graph(cfg)
+    export_frozen_graph(cfg)
