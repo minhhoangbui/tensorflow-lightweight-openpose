@@ -1,6 +1,6 @@
 import tensorflow as tf
 from .modules import Conv, ConvDW, RefinementBlock
-from .backbones import MobileNetV2, ShuffleNetV2
+from .backbones import MobileNetV2, ShuffleNetV2, ResNet50
 
 
 class CPM(tf.keras.layers.Layer):
@@ -110,6 +110,13 @@ def lw_mobilenetv2(**kwargs):
 def lw_shufflenetv2(**kwargs):
     shufflenet_v2 = ShuffleNetV2()
     return LightWeightOpenPose(backbone=shufflenet_v2, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
+                               num_refinement_stages=kwargs['num_refinement_stages'],
+                               num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
+
+
+def lw_resnet50(**kwargs):
+    resnet50 = ResNet50()
+    return LightWeightOpenPose(backbone=resnet50, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
                                num_refinement_stages=kwargs['num_refinement_stages'],
                                num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
 

@@ -1,11 +1,11 @@
 COMMON:
-  GPU: '5'
+  GPU: '2'
   device: 'CPU'
   saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
 MODEL:
-  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model_s2"
+  saved_model_dir: "/home/hoangbm/model_library/lw-pose/saved_model_m2"
   tflite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   mnn: "/home/hoangbm/model_library/lw-pose/pose.mnn"
   frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"

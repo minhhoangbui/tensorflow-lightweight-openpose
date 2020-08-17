@@ -100,7 +100,7 @@ class Trainer(object):
     def distributed_eval_step(self, dist_inputs):
         def _step_fn(inputs):
             images, target, mask = inputs
-            outputs = self.model(images, training=True)
+            outputs = self.model(images, training=False)
             per_batch_loss = get_loss(target=target, outputs=outputs, mask=mask)
             return per_batch_loss
 

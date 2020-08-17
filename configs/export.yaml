@@ -1,5 +1,5 @@
 MODEL:
-  name: 'lw_shufflenetv2'
+  name: 'lw_mobilenetv2'
   num_channels: 128
   num_stages: 1
   input_size: 368
@@ -8,7 +8,7 @@ MODEL:
 EXPORT:
   format: 'sm'
   quantized: True
-  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_s2"
+  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_m2"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_shufflenetv2_True/ckpts/"
+  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_mobilenetv2_True/ckpts/"
   frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"

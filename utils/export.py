@@ -85,13 +85,13 @@ def export_frozen_graph(cfg):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "5"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "2"
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
     config = sys.argv[1]
     with open(config, 'r') as fp:
         cfg = yaml.full_load(fp)
-    # export_saved_model(cfg)
+    export_saved_model(cfg)
     # export_tflite(cfg)
-    export_frozen_graph(cfg)
+    # export_frozen_graph(cfg)
