@@ -59,7 +59,7 @@ def run_coco_eval(gt_file_path, dt_file_path):
 class BaseEvaluator:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'], 'lw_pose_tf')
+        # self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'], 'lw_pose_tf')
         self.dataset = CocoValDataset(cfg['DATASET']['annotations'],
                                       cfg['DATASET']['images_dir'],
                                       cfg['DATASET']['dataset_type'])

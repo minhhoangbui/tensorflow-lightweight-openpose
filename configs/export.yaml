@@ -8,7 +8,7 @@ MODEL:
 EXPORT:
   format: 'sm'
   quantized: True
-  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_m2"
+  saved_model: "/home/hoang/model_library/lw-pose/saved_model_True"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_mobilenetv2_True/ckpts/"
+  checkpoint: "/home/hoang/checkpoint/pose-estimation/coco_lw_mobilenetv2_True/ckpts/"
   frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"
