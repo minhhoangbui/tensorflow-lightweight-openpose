@@ -28,7 +28,10 @@ def export_saved_model(cfg):
                     dtype=np.float32))
     model.summary()
     checkpoint = tf.train.Checkpoint(epoch=tf.Variable(0), model=model)
-    status = checkpoint.restore(tf.train.latest_checkpoint(cfg['EXPORT']['checkpoint']))
+    if os.path.isdir(cfg['EXPORT']['checkpoint']):
+        status = checkpoint.restore(tf.train.latest_checkpoint(cfg['EXPORT']['checkpoint']))
+    else:
+        status = checkpoint.restore(cfg['EXPORT']['checkpoint'])
     status.assert_existing_objects_matched()
     print("Convert checkpoint at epoch %d" % int(checkpoint.epoch))
     if os.path.exists(cfg['EXPORT']['saved_model']):
@@ -85,7 +88,7 @@ def export_frozen_graph(cfg):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)

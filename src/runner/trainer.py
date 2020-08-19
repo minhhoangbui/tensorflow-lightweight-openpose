@@ -143,7 +143,7 @@ class Trainer(object):
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
             logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
-                         f'Loss: {train_loss}, Test Loss: {val_loss}')
+                         f'Loss: {train_loss:.3f}, Test Loss: {val_loss:3f}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 logging.info(f"Saved checkpoint for epoch {epoch}: {saved_path}")
@@ -183,9 +183,9 @@ class Trainer(object):
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
             logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
-                         f'Loss: {train_loss}, Test Loss: {val_loss}')
+                         f'Loss: {train_loss:.3f}, Test Loss: {val_loss:.3f}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))
-        print("Finish training at %d" % epoch)
+        print("Finished training at %d" % epoch)
         self.writer.close()
