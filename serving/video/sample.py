@@ -6,6 +6,7 @@ from collections import deque
 from argparse import ArgumentParser, SUPPRESS
 from time import perf_counter
 from enum import Enum
+from time import time
 
 import cv2
 import numpy as np
@@ -13,7 +14,6 @@ from openvino.inference_engine import IECore
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'common'))
 
-import monitors
 from src.utils.keypoints_grouping import extract_keypoints, group_keypoints, Pose
 
 
@@ -36,13 +36,6 @@ def build_argparser():
                       help="Optional. Specify the target device to infer on; CPU, GPU, FPGA, HDDL or MYRIAD is"
                            " acceptable. The sample will look for a suitable plugin for device specified. "
                            "Default value is CPU", default="CPU", type=str)
-    args.add_argument("--labels", help="Optional. Labels mapping file", default=None, type=str)
-    args.add_argument("-t", "--prob_threshold", help="Optional. Probability threshold for detections filtering",
-                      default=0.5, type=float)
-    args.add_argument("-iout", "--iou_threshold", help="Optional. Intersection over union threshold for overlapping "
-                                                       "detections filtering", default=0.4, type=float)
-    args.add_argument("-r", "--raw_output_message", help="Optional. Output inference results raw values showing",
-                      default=False, action="store_true")
     args.add_argument("-nireq", "--num_infer_requests", help="Optional. Number of infer requests",
                       default=1, type=int)
     args.add_argument("-nstreams", "--num_streams",
@@ -53,8 +46,6 @@ def build_argparser():
     args.add_argument("-nthreads", "--number_threads",
                       help="Optional. Number of threads to use for inference on CPU (including HETERO cases)",
                       default=None, type=int)
-    args.add_argument("-loop_input", "--loop_input", help="Optional. Iterate over input infinitely",
-                      action='store_true')
     args.add_argument("-no_show", "--no_show", help="Optional. Don't show output", action='store_true')
     args.add_argument('-u', '--utilization_monitors', default='', type=str,
                       help='Optional. List of monitors to show initially.')
@@ -67,7 +58,6 @@ class Modes(Enum):
     MIN_LATENCY = 1
 
 
-class Mode():
     def __init__(self, value):
         self.current = value
 
@@ -98,8 +88,9 @@ def postprocess(outputs, scale, output_name, stride, dataset='coco'):
         num_keypoints = 32
     else:
         raise NotImplementedError
-    heatmaps = np.squeeze(outputs[output_name[0]])
-    pafs = np.squeeze(outputs[output_name[1]])
+
+    heatmaps = np.squeeze(outputs[output_name[0]].buffer)
+    pafs = np.squeeze(outputs[output_name[1]].buffer)
     heatmaps = heatmaps.transpose((1, 2, 0))
     pafs = pafs.transpose((1, 2, 0))
 
@@ -219,7 +210,7 @@ def main():
     # ---------------------------------------------- 4. Preparing inputs -----------------------------------------------
     log.info("Preparing inputs")
     input_blob = next(iter(net.input_info))
-    output_blob = list(net.outputs.key())
+    output_blob = list(net.outputs.keys())
 
     # Read and pre-process input images
     if net.input_info[input_blob].input_data.shape[1] == 3:
@@ -231,7 +222,7 @@ def main():
 
     input_stream = 0 if args.input == "cam" else args.input
 
-    mode = Mode(Modes.USER_SPECIFIED)
+    mode = Modes(Modes.USER_SPECIFIED)
     cap = cv2.VideoCapture(input_stream)
     wait_key_time = 1
 
@@ -259,10 +250,6 @@ def main():
     print("To close the application, press 'CTRL+C' here or switch to the output window and press ESC key")
     print("To switch between min_latency/user_specified modes, press TAB key in the output window")
 
-    presenter = monitors.Presenter(args.utilization_monitors, 55,
-                                   (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 4),
-                                    round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) / 8)))
-
     while (cap.isOpened()
            or completed_request_results
            or len(empty_requests) < len(exec_nets[mode.current].requests)) \
@@ -274,7 +261,6 @@ def main():
 
             poses = postprocess(outputs, scale, output_name=output_blob, dataset='coco', stride=8)
 
-            presenter.drawGraphs(frame)
             for pose in poses:
                 pose.draw(frame)
 
@@ -298,17 +284,11 @@ def main():
                         empty_requests.clear()
                         empty_requests.extend(exec_nets[mode.current].requests)
 
-                else:
-                    presenter.handleKey(key)
-
         elif empty_requests and prev_mode_active_request_count == 0 and cap.isOpened():
             start_time = perf_counter()
             ret, frame = cap.read()
             if not ret:
-                if args.loop_input:
-                    cap.open(input_stream)
-                else:
-                    cap.release()
+                cap.release()
                 continue
 
             request = empty_requests.popleft()
@@ -339,11 +319,12 @@ def main():
     if callback_exceptions:
         raise callback_exceptions[0]
 
-    print(presenter.reportMeans())
-
     for exec_net in exec_nets.values():
         await_requests_completion(exec_net.requests)
 
 
 if __name__ == '__main__':
-    sys.exit(main() or 0)
+    start = time()
+    main()
+    end = time()
+    print(end - start)
