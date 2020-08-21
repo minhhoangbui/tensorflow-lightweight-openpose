@@ -26,6 +26,7 @@ class FrozenServing(BaseServing):
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
+
         [heatmaps, pafs] = self.sess.run(
             [self.heatmaps, self.pafs],
             feed_dict={self.input: scaled_image}

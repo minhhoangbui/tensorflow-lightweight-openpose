@@ -11,21 +11,22 @@ class OpenVinoServing(BaseServing):
     def __init__(self, cfg):
         super(OpenVinoServing, self).__init__(cfg)
         ie = IECore()
-        model = ie.read_network(cfg['MODEL']['openvino'],
-                                os.path.splitext(cfg['MODEL']['openvino'])[0] + '.bin')
-        assert len(model.input_info) == 1, "Expected 1 input blob"
+        net = ie.read_network(cfg['MODEL']['openvino'],
+                              os.path.splitext(cfg['MODEL']['openvino'])[0] + '.bin')
+        assert len(net.input_info) == 1, "Expected 1 input blob"
 
-        self._input_layer_name = next(iter(model.input_info))
-        self._output_layer_name = list(model.outputs.keys())
-        self.exec_model = ie.load_network(model, cfg['COMMON']['device'])
+        self._input_layer_name = next(iter(net.input_info))
+        self._output_layer_name = list(net.outputs.keys())
+        _, _, h, w = net.input_info[self._input_layer_name].input_data.shape
+        assert h == w == self.input_size, "Input sizes are not compatible"
+        self.exec_net = ie.load_network(net, cfg['COMMON']['device'])
 
     def infer(self, image):
         scaled_image, scale = self.preprocess_image(image)
         scaled_image = np.transpose(scaled_image, axes=(0, 3, 1, 2))
-
-        output = self.exec_model.infer(inputs={self._input_layer_name: scaled_image})
-        heatmaps = np.squeeze(output[self._output_layer_name[0]])
-        pafs = np.squeeze(output[self._output_layer_name[1]])
+        outputs = self.exec_net.infer(inputs={self._input_layer_name: scaled_image})
+        heatmaps = np.squeeze(outputs[self._output_layer_name[0]])
+        pafs = np.squeeze(outputs[self._output_layer_name[1]])
 
         heatmaps = heatmaps.transpose((1, 2, 0))
         pafs = pafs.transpose((1, 2, 0))

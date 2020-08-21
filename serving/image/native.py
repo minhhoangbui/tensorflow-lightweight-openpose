@@ -5,7 +5,6 @@ import logging
 import sys
 import yaml
 import os
-from time import perf_counter
 from serving.image.base import BaseServing
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -23,10 +22,10 @@ class Serving(BaseServing):
 
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
 
-        stages_output = self.model(tensor_input)
+        stages_outputs = self.model(tensor_input)
 
-        heatmaps = np.squeeze(stages_output[-1][0].numpy())
-        pafs = np.squeeze(stages_output[-1][1].numpy())
+        heatmaps = np.squeeze(stages_outputs[-1][0].numpy())
+        pafs = np.squeeze(stages_outputs[-1][1].numpy())
 
         heatmaps = cv2.resize(heatmaps, (0, 0),
                               fx=self.stride, fy=self.stride,
