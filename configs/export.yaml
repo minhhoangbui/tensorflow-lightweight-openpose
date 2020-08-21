@@ -1,12 +1,14 @@
 MODEL:
+  name: 'lw_shufflenetv2'
   num_channels: 128
   num_stages: 1
   input_size: 368
   mobile: True
+  dataset: 'coco'
 EXPORT:
   format: 'sm'
   quantized: True
-  saved_model: "/home/hoangbm/model_library/lw-pose/saved_model_True"
+  saved_model: "/home/hoangbm/model_library/lw-pose/shuffle_True"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_pose_False/ckpts/"
-  frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_True.pb"
+  checkpoint: "/home/hoangbm/checkpoint/pose-estimation/coco_lw_shufflenetv2_True/ckpts/ckpt-19"
+  frozen_pb: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"
