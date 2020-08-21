@@ -9,6 +9,7 @@ from src import datasets
 
 def main(cfg):
     assert len(cfg['COMMON']['GPU'].split(',')) != 0, "No GPU is chosen"
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     os.environ['CUDA_VISIBLE_DEVICES'] = cfg['COMMON']['GPU']
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     print("There are {} gpus running".format(len(available_gpus)))

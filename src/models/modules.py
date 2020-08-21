@@ -149,7 +149,8 @@ class BasicBlock(tf.keras.layers.Layer):
     def __init__(self, num_filters, stride=1, name='BasicBlock', idx=0):
         super(BasicBlock, self).__init__()
         name = name + f'_block{idx}'
-        self.conv1 = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=3,
+        self.conv1 = tf.keras.layers.Conv2D(filters=num_filters,
+                                            kernel_size=3,
                                             strides=stride, padding='same',
                                             name=name+'_conv1')
         self.bn1 = tf.keras.layers.BatchNormalization(name=name+'_bn1')
@@ -159,14 +160,14 @@ class BasicBlock(tf.keras.layers.Layer):
                                             name=name+'_conv2')
         self.bn2 = tf.keras.layers.BatchNormalization(name=name+'_bn2')
         if stride != 1:
-            self.conv_down = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=1,
-                                                    strides=stride, name=name+'_conv_down')
-            self.bn_down = tf.keras.layers.BatchNormalization(name=name+'_bn_down')
+            self.downsample = tf.keras.Sequential()
+            self.downsample.add(tf.keras.layers.Conv2D(filters=num_filters, kernel_size=1,
+                                                       strides=stride, name=name+'_conv_down'))
+            self.downsample.add(tf.keras.layers.BatchNormalization(name=name+'_bn_down'))
 
     def call(self, inputs, training):
-        if hasattr(self, 'conv_down') and hasattr(self, 'bn_down'):
-            residual = self.conv_down(inputs)
-            residual = self.bn_down(residual, training=training)
+        if hasattr(self, 'downsample'):
+            residual = self.downsample(inputs)
         else:
             residual = inputs
 
@@ -197,13 +198,14 @@ class BottleNeck(tf.keras.layers.Layer):
                                             name=name+'_conv3')
         self.bn3 = tf.keras.layers.BatchNormalization(name=name+'_bn3')
 
-        self.conv_down = tf.keras.layers.Conv2D(filters=num_filters*4, kernel_size=1,
-                                                strides=stride, name=name+'_conv_down')
-        self.bn_down = tf.keras.layers.BatchNormalization(name=name+'_bn_down')
+        self.downsample = tf.keras.Sequential()
+
+        self.downsample.add(tf.keras.layers.Conv2D(filters=num_filters*4, kernel_size=1,
+                                                   strides=stride, name=name+'_conv_down'))
+        self.downsample.add(tf.keras.layers.BatchNormalization(name=name+'_bn_down'))
 
     def call(self, inputs, training):
-        residual = self.conv2(inputs)
-        residual = self.bn_down(residual, training=training)
+        residual = self.downsample(inputs)
 
         x = self.conv1(inputs)
         x = self.bn1(x)
@@ -219,20 +221,12 @@ class BottleNeck(tf.keras.layers.Layer):
         return tf.nn.relu(output)
 
 
-class ResNetBlock(tf.keras.layers.Layer):
-    def __init__(self, num_filters, num_blocks, stride=1, idx=0):
-        super(ResNetBlock, self).__init__()
-        self.blocks = []
-        self.blocks.append(BottleNeck(num_filters, stride, name=f'BottleNeck_{idx}_block_{0}'))
-
-        for i in range(1, num_blocks):
-            self.blocks.append(BottleNeck(num_filters, stride, name=f'BottleNeck_{idx}_block_{i}'))
-
-    def call(self, inputs, training):
-        x = inputs
-        for block in self.blocks:
-            x = block(x, training=training)
-        return x
+def make_bottleneck_layers(num_filters, num_blocks, stride=1, idx=0):
+    res_block = tf.keras.Sequential()
+    res_block.add(BottleNeck(num_filters, stride, name=f'BottleNeck_{idx}_block_{0}'))
+    for i in range(1, num_blocks):
+        res_block.add(BottleNeck(num_filters, 1, name=f'BottleNeck_{idx}_block_{i}'))
+    return res_block
 
 
 

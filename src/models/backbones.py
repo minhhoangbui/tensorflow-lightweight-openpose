@@ -1,22 +1,10 @@
 import tensorflow as tf
-from .modules import Conv, ConvDW, ShuffleV2Block, ResNetBlock
+from .modules import Conv, ConvDW, ShuffleV2Block, make_bottleneck_layers
 
 
 class MobileNetV2(tf.keras.layers.Layer):
     def __init__(self):
         super(MobileNetV2, self).__init__()
-        # self.conv = Conv(32, stride=2, bias=False, name='mbn2_conv1')
-        # self.conv_dw1 = ConvDW(64, bn=True, relu='relu', name='mbn2_convdw1')
-        # self.conv_dw2 = ConvDW(128, stride=2, bn=True, relu='relu', name='mbn2_convdw2')
-        # self.conv_dw3 = ConvDW(128, bn=True, relu='relu', name='mbn2_convdw3')
-        # self.conv_dw4 = ConvDW(256, stride=2, bn=True, relu='relu', name='mbn2_convdw4')
-        # self.conv_dw5 = ConvDW(256, bn=True, relu='relu', name='mbn2_convdw5')
-        # self.conv_dw6 = ConvDW(512, bn=True, relu='relu', name='mbn2_convdw6')
-        # self.conv_dw7 = ConvDW(512, bn=True, relu='relu', dilation=2, name='mbn2_convdw7')
-        # self.conv_dw8 = ConvDW(512, bn=True, relu='relu', name='mbn2_convdw8')
-        # self.conv_dw9 = ConvDW(512, bn=True, relu='relu', name='mbn2_convdw9')
-        # self.conv_dw10 = ConvDW(512, bn=True, relu='relu', name='mbn2_convdw10')
-        # self.conv_dw11 = ConvDW(512, bn=True, relu='relu', name='mbn2_convdw11')
         self.backbone = tf.keras.Sequential([
             Conv(32, stride=2, bias=False, name='mbn2_conv1'),
             ConvDW(64, bn=True, relu='relu', name='mbn2_convdw1'),
@@ -33,19 +21,6 @@ class MobileNetV2(tf.keras.layers.Layer):
         ])
 
     def call(self, inputs, training):
-        # x = self.conv(inputs, training=training)
-        # x = self.conv_dw1(x, training=training)
-        # x = self.conv_dw2(x, training=training)
-        # x = self.conv_dw3(x, training=training)
-        # x = self.conv_dw4(x, training=training)
-        # x = self.conv_dw5(x, training=training)
-        # x = self.conv_dw6(x, training=training)
-        # x = self.conv_dw7(x, training=training)
-        # x = self.conv_dw8(x, training=training)
-        # x = self.conv_dw9(x, training=training)
-        # x = self.conv_dw10(x, training=training)
-        # x = self.conv_dw11(x, training=training)
-        # return x
         return self.backbone(inputs, training)
 
 
@@ -95,9 +70,9 @@ class ResNet50(tf.keras.layers.Layer):
         self.bn1 = tf.keras.layers.BatchNormalization(name='bn1')
         self.pool = tf.keras.layers.MaxPool2D(pool_size=(3, 3),
                                               strides=2, padding='same')
-        self.block1 = ResNetBlock(num_filters=64, num_blocks=layer_params[0], idx=1)
-        self.block2 = ResNetBlock(num_filters=128, num_blocks=layer_params[1],
-                                  stride=2, idx=2)
+        self.block1 = make_bottleneck_layers(num_filters=64, num_blocks=layer_params[0], idx=1)
+        self.block2 = make_bottleneck_layers(num_filters=128, num_blocks=layer_params[1],
+                                             stride=2, idx=2)
 
     def call(self, inputs, training):
         x = self.conv1(inputs)
