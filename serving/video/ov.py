@@ -2,9 +2,9 @@ import sys
 from argparse import ArgumentParser
 from os import path
 
-from serving.video.pcks.models import IEModel
-from serving.video.pcks.steps import run_pipeline
-from serving.video.pcks.renderer import ResultRenderer
+from serving.video.common.models import IEModel
+from serving.video.common.steps import run_pipeline
+from serving.video.common.renderer import ResultRenderer
 
 
 def demo(estimator, videos, output, meta):
@@ -21,6 +21,7 @@ def build_argparser():
                       help="Required. Id of the video capturing device to open (to open default camera just pass 0), "
                            "path to a video or a .txt file with a list of ids or video files (one object per line)",
                       required=True, type=str)
+    args.add_argument("-ni", '--num_requests', default=1, type=int)
     args.add_argument("-d", "--device",
                       help="Optional. Specify a target device to infer on. CPU, GPU, FPGA, HDDL or MYRIAD is "
                            "acceptable. The demo will look for a suitable plugin for the device specified. "
@@ -45,7 +46,7 @@ def main():
     pose_xml = args.m_pose_estimator
     pose_bin = args.m_pose_estimator.replace(".xml", ".bin")
 
-    estimator = IEModel(pose_xml, pose_bin, args.device, num_requests=8)
+    estimator = IEModel(pose_xml, pose_bin, args.device, num_requests=args.num_requests)
 
     meta = {'dataset': 'coco',
             'output_names': estimator.output_name,
