@@ -1,5 +1,6 @@
 import tensorflow as tf
 from .modules import Conv, ConvDW, RefinementBlock
+from .backbones import MobileNetV2, ShuffleNetV2, ResNet50
 
 
 class CPM(tf.keras.layers.Layer):
@@ -73,22 +74,9 @@ class RefinementStage(tf.keras.layers.Layer):
 
 
 class LightWeightOpenPose(tf.keras.Model):
-    def __init__(self, num_channels, num_refinement_stages=1, num_joints=19, num_pafs=38, mobile=False):
+    def __init__(self, backbone, num_channels, num_refinement_stages=1, num_joints=19, num_pafs=38, mobile=False):
         super(LightWeightOpenPose, self).__init__()
-        self.backbone = tf.keras.Sequential([
-            Conv(32, stride=2, bias=False, name='backbone_conv1'),
-            ConvDW(64, bn=True, relu='relu', name='backbone_convdw1'),
-            ConvDW(128, stride=2, bn=True, relu='relu', name='backbone_convdw2'),
-            ConvDW(128, bn=True, relu='relu', name='backbone_convdw3'),
-            ConvDW(256, stride=2, bn=True, relu='relu', name='backbone_convdw4'),
-            ConvDW(256, bn=True, relu='relu', name='backbone_convdw5'),
-            ConvDW(512, bn=True, relu='relu', name='backbone_convdw6'),
-            ConvDW(512, bn=True, relu='relu', dilation=2, name='backbone_convdw7'),
-            ConvDW(512, bn=True, relu='relu', name='backbone_convdw8'),
-            ConvDW(512, bn=True, relu='relu', name='backbone_convdw9'),
-            ConvDW(512, bn=True, relu='relu', name='backbone_convdw10'),
-            ConvDW(512, bn=True, relu='relu', name='backbone_convdw11'),
-        ])
+        self.backbone = backbone
         self.cpm = CPM(num_channels, mobile)
         self.initial_stage = InitialStage(num_channels, num_joints, num_pafs, mobile)
         self.refinement_stages = [
@@ -97,7 +85,9 @@ class LightWeightOpenPose(tf.keras.Model):
         self.concat = tf.keras.layers.Concatenate(axis=-1)
 
     def call(self, inputs, training=False, mask=None):
+        # 1*368*368*3
         backbone_features = self.backbone(inputs, training=training)
+        # 1*46*46*512
         backbone_features = self.cpm(backbone_features, training=training)
 
         stages_output = [self.initial_stage(backbone_features, training=training)]
@@ -110,8 +100,23 @@ class LightWeightOpenPose(tf.keras.Model):
         return stages_output
 
 
-def lw(**kwargs):
-    return LightWeightOpenPose(num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
+def lw_mobilenetv2(**kwargs):
+    mobilenet_v2 = MobileNetV2()
+    return LightWeightOpenPose(backbone=mobilenet_v2, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
+                               num_refinement_stages=kwargs['num_refinement_stages'],
+                               num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
+
+
+def lw_shufflenetv2(**kwargs):
+    shufflenet_v2 = ShuffleNetV2()
+    return LightWeightOpenPose(backbone=shufflenet_v2, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
+                               num_refinement_stages=kwargs['num_refinement_stages'],
+                               num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
+
+
+def lw_resnet50(**kwargs):
+    resnet50 = ResNet50()
+    return LightWeightOpenPose(backbone=resnet50, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
                                num_refinement_stages=kwargs['num_refinement_stages'],
                                num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])
 

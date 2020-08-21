@@ -2,6 +2,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import datetime
+import time
 import sys
 import logging
 from tensorflow.keras.utils import Progbar
@@ -15,7 +16,7 @@ class Trainer(object):
         self.cfg = cfg
         self.strategy = strategy
         self.saved_dir = os.path.join(cfg['COMMON']['saved_dir'],
-                                      f"{cfg['DATASET']['name']}_lw_pose_{cfg['MODEL']['mobile']}")
+                                      f"{cfg['DATASET']['name']}_{cfg['MODEL']['name']}_{cfg['MODEL']['mobile']}")
         if cfg['DATASET']['name'] == 'coco':
             num_joints = 19
         elif cfg['DATASET']['name'] == 'kinect':
@@ -36,12 +37,10 @@ class Trainer(object):
                                                                num_refinement_stages=cfg['MODEL']['num_stages'],
                                                                num_joints=num_joints, num_pafs=num_pafs,
                                                                mobile=cfg['MODEL']['mobile'])
-            self.model.build((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3))
-            self.model.summary()
-
             # initialize model
             self.model(np.zeros((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
                                 dtype=np.float32))
+            self.model.summary()
 
         self.checkpoint = tf.train.Checkpoint(epoch=tf.Variable(0), model=self.model)
         self.manager = tf.train.CheckpointManager(checkpoint=self.checkpoint,
@@ -101,7 +100,7 @@ class Trainer(object):
     def distributed_eval_step(self, dist_inputs):
         def _step_fn(inputs):
             images, target, mask = inputs
-            outputs = self.model(images, training=True)
+            outputs = self.model(images, training=False)
             per_batch_loss = get_loss(target=target, outputs=outputs, mask=mask)
             return per_batch_loss
 
@@ -125,7 +124,7 @@ class Trainer(object):
             step = None
             train_progbar = Progbar(target=num_train_batch, stateful_metrics=['loss'])
             val_progbar = Progbar(target=num_val_batch, stateful_metrics=['loss'])
-
+            start_time = time.time()
             for step, dist_inputs in enumerate(train_dataset):
                 current_loss = self.train_step(dist_inputs)
                 train_progbar.update(step + 1, [('loss', current_loss)])
@@ -137,12 +136,14 @@ class Trainer(object):
                 val_progbar.update(step + 1, [('loss', current_loss)])
                 val_loss += current_loss
             val_loss /= step + 1
+            end_time = time.time()
 
             with self.writer.as_default():
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
+            logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
+                         f'Loss: {train_loss:.3f}, Test Loss: {val_loss:3f}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 logging.info(f"Saved checkpoint for epoch {epoch}: {saved_path}")
@@ -163,7 +164,7 @@ class Trainer(object):
             step = None
             train_progbar = Progbar(target=num_train_batch, stateful_metrics=['loss'])
             val_progbar = Progbar(target=num_val_batch, stateful_metrics=['loss'])
-
+            start_time = time.time()
             for step, dist_inputs in enumerate(train_dist_dataset):
                 current_loss = self.distributed_train_step(dist_inputs)
                 train_progbar.update(step + 1, [('loss', current_loss)])
@@ -175,14 +176,16 @@ class Trainer(object):
                 val_progbar.update(step + 1, [('loss', current_loss)])
                 val_loss += current_loss
             val_loss /= step + 1
+            end_time = time.time()
 
             with self.writer.as_default():
                 tf.summary.scalar('Training loss', train_loss, step=epoch)
                 tf.summary.scalar('Val loss', val_loss, step=epoch)
                 self.writer.flush()
-            logging.info(f'Epoch {epoch}, Loss: {train_loss}, Test Loss: {val_loss}')
+            logging.info(f'Epoch {epoch}, Total executing time: {(end_time - start_time):.2f}, '
+                         f'Loss: {train_loss:.3f}, Test Loss: {val_loss:.3f}')
             if epoch % self.cfg['COMMON']['saved_epochs'] == 0:
                 saved_path = self.manager.save()
                 print("Saved checkpoint for epoch {}: {}".format(epoch, saved_path))
-        print("Finish training at %d" % epoch)
+        print("Finished training at %d" % epoch)
         self.writer.close()

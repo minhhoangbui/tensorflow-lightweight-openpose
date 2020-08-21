@@ -66,12 +66,12 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-    train_dataset = datasets.__dict__[cfg['name']](annotations_dir=cfg['annotation_dir'],
-                                                   images_dir=cfg['image_dir'],
-                                                   input_size=cfg['input_size'],
-                                                   stride=cfg['stride'], sigma=cfg['sigma'],
-                                                   paf_thickness=cfg['paf_thickness'], is_training=True)
+    train_dataset = datasets.__dict__[cfg['name']](annotations_dir=cfg['DATASET']['annotation_dir'],
+                                                   images_dir=cfg['DATASET']['image_dir'],
+                                                   input_size=cfg['MODEL']['input_size'],
+                                                   stride=cfg['DATASET']['stride'], sigma=cfg['DATASET']['sigma'],
+                                                   paf_thickness=cfg['DATASET']['paf_thickness'], is_training=True)
 
-    ds = train_dataset.get_dataset(cfg['batch_size'])
+    ds = train_dataset.get_dataset(cfg['DATASET']['batch_size'])
 
-    visualize(ds, cfg['name'])
+    visualize(ds, cfg['DATASET']['name'])
