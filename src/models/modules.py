@@ -146,22 +146,25 @@ class ShuffleNetV2ProjBranch(tf.keras.layers.Layer):
 
 
 class BasicBlock(tf.keras.layers.Layer):
-    def __init__(self, num_filters, stride=1, name='BasicBlock', idx=0):
+    def __init__(self, num_filters, stride=1, mobile=False, name='BasicBlock', idx=0):
         super(BasicBlock, self).__init__()
         name = name + f'_block{idx}'
         self.conv1 = tf.keras.layers.Conv2D(filters=num_filters,
                                             kernel_size=3,
                                             strides=stride, padding='same',
+                                            groups=4 if mobile else 1,
                                             name=name+'_conv1')
         self.bn1 = tf.keras.layers.BatchNormalization(name=name+'_bn1')
 
         self.conv2 = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=3,
                                             strides=1, padding='same',
+                                            groups=4 if mobile else 1,
                                             name=name+'_conv2')
         self.bn2 = tf.keras.layers.BatchNormalization(name=name+'_bn2')
         if stride != 1:
             self.downsample = tf.keras.Sequential()
             self.downsample.add(tf.keras.layers.Conv2D(filters=num_filters, kernel_size=1,
+                                                       groups=4 if mobile else 1,
                                                        strides=stride, name=name+'_conv_down'))
             self.downsample.add(tf.keras.layers.BatchNormalization(name=name+'_bn_down'))
 
@@ -182,25 +185,29 @@ class BasicBlock(tf.keras.layers.Layer):
 
 
 class BottleNeck(tf.keras.layers.Layer):
-    def __init__(self, num_filters, stride=1, name='BottleNeck'):
+    def __init__(self, num_filters, stride=1, mobile=False, name='BottleNeck'):
         super(BottleNeck, self).__init__()
         self.conv1 = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=1,
                                             strides=1, padding='same',
+                                            groups=4 if mobile else 1,
                                             name=name+'_conv1')
         self.bn1 = tf.keras.layers.BatchNormalization(name=name+'_bn1')
         self.conv2 = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=3,
                                             strides=stride, padding='same',
+                                            groups=4 if mobile else 1,
                                             name=name+'_conv2')
         self.bn2 = tf.keras.layers.BatchNormalization(name=name+'_bn2')
 
         self.conv3 = tf.keras.layers.Conv2D(filters=num_filters * 4, kernel_size=1,
                                             strides=1, padding='same',
+                                            groups=4 if mobile else 1,
                                             name=name+'_conv3')
         self.bn3 = tf.keras.layers.BatchNormalization(name=name+'_bn3')
 
         self.downsample = tf.keras.Sequential()
 
         self.downsample.add(tf.keras.layers.Conv2D(filters=num_filters*4, kernel_size=1,
+                                                   groups=4 if mobile else 1,
                                                    strides=stride, name=name+'_conv_down'))
         self.downsample.add(tf.keras.layers.BatchNormalization(name=name+'_bn_down'))
 
@@ -221,11 +228,11 @@ class BottleNeck(tf.keras.layers.Layer):
         return tf.nn.relu(output)
 
 
-def make_bottleneck_layers(num_filters, num_blocks, stride=1, idx=0):
+def make_bottleneck_layers(num_filters, num_blocks, mobile, stride=1, idx=0):
     res_block = tf.keras.Sequential()
-    res_block.add(BottleNeck(num_filters, stride, name=f'BottleNeck_{idx}_block_{0}'))
+    res_block.add(BottleNeck(num_filters, stride, mobile, name=f'BottleNeck_{idx}_block_{0}'))
     for i in range(1, num_blocks):
-        res_block.add(BottleNeck(num_filters, 1, name=f'BottleNeck_{idx}_block_{i}'))
+        res_block.add(BottleNeck(num_filters, 1, mobile, name=f'BottleNeck_{idx}_block_{i}'))
     return res_block
 
 

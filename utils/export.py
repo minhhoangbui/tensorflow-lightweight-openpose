@@ -88,7 +88,7 @@ def export_frozen_graph(cfg):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "5"
     available_gpus = tf.config.experimental.list_physical_devices('GPU')
     for gpu in available_gpus:
         tf.config.experimental.set_memory_growth(gpu, True)

@@ -115,7 +115,7 @@ def lw_shufflenetv2(**kwargs):
 
 
 def lw_resnet50(**kwargs):
-    resnet50 = ResNet50()
+    resnet50 = ResNet50(mobile=kwargs['mobile'])
     return LightWeightOpenPose(backbone=resnet50, num_channels=kwargs['num_channels'], mobile=kwargs['mobile'],
                                num_refinement_stages=kwargs['num_refinement_stages'],
                                num_joints=kwargs['num_joints'], num_pafs=kwargs['num_pafs'])

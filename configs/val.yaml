@@ -1,10 +1,10 @@
 COMMON:
-  GPU: '5'
+  GPU: '2'
   device: 'CPU'
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
 MODEL:
-  saved_model_dir: "/home/hoangbm/model_library/lw-pose/shuffle_True"
+  saved_model_dir: "/home/hoangbm/model_library/lw-pose/resnet50"
   tflite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   mnn: "/home/hoangbm/model_library/lw-pose/pose.mnn"
   frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"

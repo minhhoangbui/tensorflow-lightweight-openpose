@@ -1,7 +1,7 @@
 COMMON:
-  GPU: '1'
-  retrain: False
-  saved_dir: "/home/hoang/checkpoint/pose-estimation/"
+  GPU: '2,4,5'
+  retrain: True
+  saved_dir: "/home/hoangbm/checkpoint/pose-estimation/"
   saved_epochs: 2
 MODEL:
   name: 'lw_resnet50'
@@ -11,17 +11,17 @@ MODEL:
   mobile: True
 DATASET:
   name: 'coco'
-  annotation_dir: '/home/hoang/datasets/coco2017/'
-  image_dir: '/mnt/hdd3b/Datasets/COCO2017/images'
+  annotation_dir: '/home/hoangbm/datasets/coco2017/'
+  image_dir: '/mnt/ssd2/BACKUP/Datasets/COCO2017/images'
   stride: 8
   sigma: 7
   paf_thickness: 1
 TRAIN:
-  num_epochs: 50
-  learning_rate: 0.001
+  num_epochs: 40
+  learning_rate: 0.00053
   decay_step: 5000
-  decay_rate: 0.96
-  batch_size: 10
+  decay_rate: 0.9
+  batch_size: 21
 VAL:
-  batch_size: 10
+  batch_size: 21
 

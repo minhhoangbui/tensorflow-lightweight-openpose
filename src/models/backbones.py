@@ -63,22 +63,25 @@ class ShuffleNetV2(tf.keras.layers.Layer):
 
 
 class ResNet50(tf.keras.layers.Layer):
-    def __init__(self, layer_params=(3, 4)):
+    def __init__(self, mobile, layer_params=(2, 4, 3)):
         super(ResNet50, self).__init__()
         self.conv1 = tf.keras.layers.Conv2D(filters=64, kernel_size=7,
                                             strides=2, padding='same', name='conv1')
         self.bn1 = tf.keras.layers.BatchNormalization(name='bn1')
         self.pool = tf.keras.layers.MaxPool2D(pool_size=(3, 3),
                                               strides=2, padding='same')
-        self.block1 = make_bottleneck_layers(num_filters=64, num_blocks=layer_params[0], idx=1)
+        self.block1 = make_bottleneck_layers(num_filters=64, num_blocks=layer_params[0],
+                                             mobile=mobile, idx=1)
         self.block2 = make_bottleneck_layers(num_filters=128, num_blocks=layer_params[1],
-                                             stride=2, idx=2)
+                                             mobile=mobile, stride=2, idx=2)
+        self.block3 = make_bottleneck_layers(num_filters=256, num_blocks=layer_params[2],
+                                             mobile=mobile, stride=2, idx=3)
 
     def call(self, inputs, training):
         x = self.conv1(inputs)
         x = self.bn1(x, training=training)
         x = tf.nn.relu(x)
-        x = self.pool(x)
         x = self.block1(x, training=training)
         x = self.block2(x, training=training)
+        x = self.block3(x, training=training)
         return x
