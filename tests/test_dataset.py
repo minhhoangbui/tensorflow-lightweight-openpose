@@ -64,13 +64,15 @@ if __name__ == '__main__':
     with open(cfg, 'r') as fp:
         cfg = yaml.full_load(fp)
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
-    train_dataset = datasets.__dict__[cfg['name']](annotations_dir=cfg['DATASET']['annotation_dir'],
-                                                   images_dir=cfg['DATASET']['image_dir'],
-                                                   input_size=cfg['MODEL']['input_size'],
-                                                   stride=cfg['DATASET']['stride'], sigma=cfg['DATASET']['sigma'],
-                                                   paf_thickness=cfg['DATASET']['paf_thickness'], is_training=True)
+    train_dataset = datasets.__dict__[cfg['DATASET']['name']](annotations_dir=cfg['DATASET']['annotation_dir'],
+                                                              images_dir=cfg['DATASET']['image_dir'],
+                                                              input_size=cfg['MODEL']['input_size'],
+                                                              stride=cfg['DATASET']['stride'],
+                                                              sigma=cfg['DATASET']['sigma'],
+                                                              paf_thickness=cfg['DATASET']['paf_thickness'],
+                                                              is_training=True)
 
     ds = train_dataset.get_dataset(cfg['DATASET']['batch_size'])
 

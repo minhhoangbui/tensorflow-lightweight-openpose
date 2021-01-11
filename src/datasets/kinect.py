@@ -28,8 +28,8 @@ class KinectDataset(BaseDataset):
             annotations_file = os.path.join(annotations_dir, 'annos.pkl')
             self._images_dir = os.path.join(images_dir, 'images')
         else:
-            annotations_file = os.path.join(annotations_dir, 'val2017.pkl')
-            self._images_dir = os.path.join(images_dir, 'val2017')
+            annotations_file = os.path.join(annotations_dir, 'annos.pkl')
+            self._images_dir = os.path.join(images_dir, 'images')
         with open(annotations_file, 'rb') as f:
             self._img_ids, self._annotations = pickle.load(f)
         self.n_keypoints = 32

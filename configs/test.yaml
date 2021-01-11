@@ -1,7 +1,7 @@
 DATASET:
-  name: 'coco'
-  annotation_dir: '/home/hoangbm/datasets/coco2017/'
-  image_dir: '/mnt/ssd2/Datasets/COCO2017/images'
+  name: 'kinect'
+  annotation_dir: '/home/hoangbm/datasets/kinect/'
+  image_dir: '/home/hoangbm/datasets/kinect'
   stride: 8
   sigma: 7
   paf_thickness: 1

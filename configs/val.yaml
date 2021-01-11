@@ -4,7 +4,7 @@ COMMON:
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'
 MODEL:
-  saved_model_dir: "/home/hoangbm/model_library/lw-pose/resnet50"
+  saved_model_dir: "/home/hoangbm/model_library/lw-pose/coco_mbv2"
   tflite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
   mnn: "/home/hoangbm/model_library/lw-pose/pose.mnn"
   frozen_graph: "/home/hoangbm/model_library/lw-pose/pose_s2.pb"
@@ -14,6 +14,6 @@ MODEL:
 DATASET:
   annotations: "/mnt/ssd2/BACKUP/Datasets/COCO2017/annotations"
   images_dir: '/mnt/ssd2/BACKUP/Datasets/COCO2017/images'
-  image: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/m10.jpg'
+  image: 'serving/tests/m9.jpg'
   dataset_type: "val"
   name: 'coco'

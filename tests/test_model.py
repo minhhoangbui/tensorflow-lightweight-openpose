@@ -18,7 +18,7 @@ def inspect_architecture(cfg):
 
 
 def inspect_backbones(cfg):
-    backbone = ResNet50()
+    backbone = ResNet50(mobile=True)
     out = backbone(np.zeros((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
                    dtype=np.float32))
     print(out.shape)
