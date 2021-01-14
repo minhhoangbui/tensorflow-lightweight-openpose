@@ -44,7 +44,7 @@ class BaseDataset:
                 if keypoint[2] <= 1:
                     set_gaussian(keypoint_maps[keypoint_idx], keypoint[0], keypoint[1], self._stride, self._sigma)
 
-        keypoint_maps[-1] = 1 - keypoint_maps.max(axis=0)
+        keypoint_maps[-1] = 1 - keypoint_maps.max(axis=0, initial=0)
         return keypoint_maps
 
     def _generate_paf_maps(self, sample):

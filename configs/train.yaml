@@ -1,5 +1,5 @@
 COMMON:
-  GPU: '2,3'
+  GPU: '0,5'
   retrain: False
   saved_dir: "/mnt/hdd10tb/Users/hoangbm/checkpoint/pose-estimation/"
   saved_epochs: 2
