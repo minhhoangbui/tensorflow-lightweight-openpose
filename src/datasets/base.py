@@ -8,11 +8,11 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(os.path.abspath(__file__)).parent.parent.parent))
 from src.datasets.utils import set_paf, set_gaussian, get_mask
-from src.datasets.transformations import Scale, Rotate, CropPad, Flip
+from src.datasets.transformations import Scale, Rotate, CropPad, Flip, HideAndSeek
 
 
 class BaseDataset:
-    def __init__(self, input_size, stride, sigma, paf_thickness):
+    def __init__(self, input_size, stride, sigma, paf_thickness, use_aid=False):
         self.input_size = input_size
         self._stride = stride
         self._sigma = sigma
@@ -28,6 +28,8 @@ class BaseDataset:
             CropPad(pad=(128, 128, 128)),
             Flip()
         ]
+        if use_aid:
+            self.transformations.insert(-1, HideAndSeek())
 
     def _generate_keypoint_maps(self, sample):
         n_rows, n_cols, _ = sample['image'].shape

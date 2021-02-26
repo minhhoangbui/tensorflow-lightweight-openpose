@@ -1,4 +1,5 @@
 import sys
+sys.path.append('/home/hoangbm/lightweight_openpose_tensorflow')
 import yaml
 import os
 import tensorflow as tf

@@ -1,12 +1,12 @@
 COMMON:
-  GPU: '0,5'
-  retrain: False
+  GPU: '0,1'
+  retrain: True
   saved_dir: "/mnt/hdd10tb/Users/hoangbm/checkpoint/pose-estimation/"
   saved_epochs: 2
 MODEL:
   name: 'lw_mobilenetv2'
   num_channels: 128
-  num_stages: 2
+  num_stages: 1
   input_size: 368
   mobile: True
 DATASET:
@@ -16,12 +16,13 @@ DATASET:
   stride: 8
   sigma: 7
   paf_thickness: 1
+  use_aid: False
 TRAIN:
-  num_epochs: 30
+  num_epochs: 40
   learning_rate: 0.001
   decay_step: 5000
   decay_rate: 0.9
-  batch_size: 16
+  batch_size: 32
 VAL:
-  batch_size: 16
+  batch_size: 32
 

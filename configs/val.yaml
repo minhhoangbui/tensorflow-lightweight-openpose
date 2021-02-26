@@ -1,5 +1,5 @@
 COMMON:
-  GPU: '2'
+  GPU: '0'
   device: 'CPU'
   output: "/tmp/output.json"
   result: '/home/hoangbm/lightweight_openpose_tensorflow/serving/tests/test.jpg'

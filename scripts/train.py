@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append('/home/hoangbm/lightweight_openpose_tensorflow')
 import yaml
 import tensorflow as tf
 
@@ -23,6 +24,7 @@ def main(cfg):
         stride=cfg['DATASET']['stride'],
         sigma=cfg['DATASET']['sigma'],
         paf_thickness=cfg['DATASET']['paf_thickness'],
+        use_aid=cfg['DATASET']['use_aid'],
         is_training=True)
     num_train_batch = len(train_dataset) // cfg['TRAIN']['batch_size']
     train_dataset = train_dataset.get_dataset(cfg['TRAIN']['batch_size'])
@@ -34,6 +36,7 @@ def main(cfg):
         stride=cfg['DATASET']['stride'],
         sigma=cfg['DATASET']['sigma'],
         paf_thickness=cfg['DATASET']['paf_thickness'],
+        use_aid=False,
         is_training=False)
     num_val_batch = len(val_dataset) // cfg['VAL']['batch_size']
     val_dataset = val_dataset.get_dataset(cfg['VAL']['batch_size'])

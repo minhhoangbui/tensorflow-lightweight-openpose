@@ -261,3 +261,39 @@ class Flip:
         for r, l in zip(right, left):
             keypoints[r], keypoints[l] = keypoints[l], keypoints[r]
         return keypoints
+
+
+class HideAndSeek:
+    """Augmentation by informantion dropping in Hide-and-Seek paradigm. Paper
+        ref: Huang et al. AID: Pushing the Performance Boundary of Human Pose
+        Estimation with Information Dropping Augmentation (arXiv:2008.07139 2020).
+        Args:
+            prob_has_hide (float): Probability of hiding patches.
+            grid_sizes (list): List of optional grid sizes.
+    """
+    def __init__(self, prob_has_hide=0.5, grid_sizes=(0, 8, 16, 23, 46)):
+        self.prob_has_hide = prob_has_hide
+        self.grid_sizes = grid_sizes
+
+    def _hide_and_seek(self, img):
+        height, width, _ = img.shape
+
+        index = np.random.randint(0, len(self.grid_sizes) - 1)
+        grid_size = self.grid_sizes[index]
+
+        if grid_size != 0:
+            for x in range(0, width, grid_size):
+                for y in range(0, height, grid_size):
+                    x_end = min(width, x + grid_size)
+                    y_end = min(height, y + grid_size)
+                    img[x:x_end, y:y_end, :] = 0
+        return img
+
+    def __call__(self, sample):
+        prob = random.random()
+
+        if prob <= self.prob_has_hide:
+            return sample
+
+        sample['image'] = self._hide_and_seek(sample['image'])
+        return sample

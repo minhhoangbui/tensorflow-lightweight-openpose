@@ -37,9 +37,10 @@ def map_decorator(func):
 
 class CocoDataset(BaseDataset):
     def __init__(self, annotations_dir, images_dir, input_size,
-                 stride, sigma, paf_thickness, is_training):
+                 stride, sigma, paf_thickness, use_aid, is_training):
         super(CocoDataset, self).__init__(input_size=input_size, stride=stride,
-                                          sigma=sigma, paf_thickness=paf_thickness)
+                                          sigma=sigma, paf_thickness=paf_thickness,
+                                          use_aid=use_aid)
 
         if is_training:
             annotations_file = os.path.join(annotations_dir, 'train2017.pkl')
@@ -78,5 +79,5 @@ class CocoValDataset:
 def coco(**kwargs):
     return CocoDataset(annotations_dir=kwargs['annotations_dir'], images_dir=kwargs['images_dir'],
                        input_size=kwargs['input_size'], stride=kwargs['stride'],
-                       sigma=kwargs['sigma'], paf_thickness=kwargs['paf_thickness'],
+                       sigma=kwargs['sigma'], paf_thickness=kwargs['paf_thickness'], use_aid=kwargs['use_aid'],
                        is_training=kwargs['is_training'])
