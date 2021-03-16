@@ -37,10 +37,29 @@ def export_saved_model(cfg):
     print("Convert checkpoint at epoch %d" % int(checkpoint.epoch))
     if os.path.exists(cfg['EXPORT']['saved_model']):
         shutil.rmtree(cfg['EXPORT']['saved_model'])
-    model._set_inputs(inputs=tf.ones((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
-                                     dtype=tf.float32))
+
+    # model._set_inputs(inputs=tf.ones((1, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3),
+    #                                  dtype=tf.float32))
+
+    @tf.function
+    def my_model(inputs):
+        inputs = {
+            'image': inputs
+        }
+        outputs = model(inputs)
+
+        predictions = {
+            'joints': outputs[1][0],
+            'pafs': outputs[1][1]
+        }
+        return predictions
+
     if format_ == 'sm':
-        tf.saved_model.save(model, cfg['EXPORT']['saved_model'])
+        my_signatures = my_model.get_concrete_function(
+            inputs=tf.TensorSpec([None, cfg['MODEL']['input_size'], cfg['MODEL']['input_size'], 3],
+                                 dtype=tf.dtypes.float32)
+        )
+        tf.saved_model.save(model, cfg['EXPORT']['saved_model'], signatures=my_signatures)
     else:
         model.save(cfg['EXPORT']['saved_model'], save_format='tf')
 

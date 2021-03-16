@@ -21,12 +21,11 @@ class Serving(BaseServing):
         scaled_image, scale = self.preprocess_image(image)
 
         tensor_input = tf.convert_to_tensor(scaled_image, dtype=tf.float32)
-        import time
-        start = time.time()
-        for _ in range(100):
-            stages_outputs = self.model(tensor_input)
-        print(f'{(time.time() - start) / 100}')
 
+        stages_outputs = self.model(tensor_input)
+        # TODO: After renaming the input and outputs from the graph during converting to savedModel, the number of
+        #  output reduces from 4 to 2, so it is possible that stages_outputs[][] doesn't work. The same may goes with
+        #  the other serving code
         heatmaps = np.squeeze(stages_outputs[-1][0].numpy())
         pafs = np.squeeze(stages_outputs[-1][1].numpy())
 

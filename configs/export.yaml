@@ -10,7 +10,7 @@ EXPORT:
   quantized: True
   saved_model: "/home/hoangbm/model_library/lw-pose/coco_mbv2"
   tf_lite: "/home/hoangbm/model_library/lw-pose/poseT.tflite"
-  checkpoint: "/mnt/hdd10tb/Users/hoangbm/checkpoint/pose-estimation/coco_lw_mobilenetv2_True_True/ckpts/"
+  checkpoint: "/mnt/hdd10tb/Users/hoangbm/checkpoint/pose-estimation/lightweight/coco_lw_mobilenetv2_True/ckpts"
   frozen_pb: "/home/hoangbm/model_library/lw-pose/coco_mbv2.pb"
   trt: "/home/hoangbm/model_library/lw-pose/coco_mbv2_trt"
-GPU: "2"
+GPU: "0"
